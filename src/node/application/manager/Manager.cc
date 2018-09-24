@@ -6,7 +6,6 @@ Tmsg m_st_msg;
 
 void Manager::startup()
 {
-
 	packet_rate = par("packet_rate");
 	recipientAddress = par("nextRecipient").stringValue();//endereço em string
 	recipientId = atoi(recipientAddress.c_str());// endereço em inteiro
@@ -25,8 +24,8 @@ void Manager::startup()
 	m_comm_plugin.timer_reset_timeout = m_timer_reset_timeout;
 
 	
-	CommunicationPlugin *comm_plugins[] = {&m_comm_plugin, 0};
-	manager_init(comm_plugins);
+	CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin, 0};
+	manager_init(m_comm_plugins);
 	
 	ManagerListener listener = MANAGER_LISTENER_EMPTY;
 	listener.measurement_data_updated = &new_data_received;
@@ -38,10 +37,8 @@ void Manager::startup()
 	packetsSent.clear(); //zera as posições do map
 	packetsReceived.clear();
 	bytesReceived.clear();
-	
-	manager_start();
 
-	declareOutput("Packets received per node");
+	manager_start();
 }
 
 void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
@@ -54,46 +51,44 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	
 	Tmsg tmp = rcvPacket->getExtraData();
 	m_st_msg.recv_str = tmp.send_str;
-	
-	// This node is the final recipient for the packet
-	if (recipientAddress.compare(SELF_NETWORK_ADDRESS) == 0) {
-		//delaylimit == 0 (sem limite) ou o tempo atual da simulação menos a hora q o pacote foi criado
-		if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
-			trace() << m_st_msg.recv_str;
-			trace() << "Received packet #" << sequenceNumber << " from node " << source;
-			collectOutput("Packets received per node", sourceId);//Adds one to the value of output name with index 3.
-			packetsReceived[sourceId]++;
-			bytesReceived[sourceId] += rcvPacket->getByteLength();
-		} else {
-			trace() << "Packet #" << sequenceNumber << " from node " << source <<
-				" exceeded delay limit of " << delayLimit << "s";
-		}
-	// Packet has to be forwarded to the next hop recipient
+	for (int i = 0; i < 65535; i++)
+	{
+		m_st_msg.buff_msg[i] = tmp.buff_msg[i];
+	}
+	if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
+	//delaylimit == 0 (sem limite) ou o tempo atual da simulação menos a hora q o pacote foi criado
+	if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
+		trace() << m_st_msg.recv_str;
+		trace() << "Received packet #" << sequenceNumber << " from node " << source;
+		m_CONTEXT_ID = {2, 0};
+		Context *m_ctx;
+		m_ctx = context_get_and_lock(m_CONTEXT_ID);
+		//DEBUG("looping");
+		//communication_connection_loop(m_ctx);
+		communication_wait_for_data_input(m_ctx);
+		communication_read_input_stream(m_ctx->id);
+		context_unlock(m_ctx);
+		//manager_connection_loop(m_CONTEXT_ID);
+		setTimer(SEND_PACKET, packet_spacing);
 	} else {
+		trace() << "Packet #" << sequenceNumber << " from node " << source <<
+			" exceeded delay limit of " << delayLimit << "s";
+	}
+}else {
 		ApplicationPacket* fwdPacket = rcvPacket->dup();
 		// Reset the size of the packet, otherwise the app overhead will keep adding on
 		fwdPacket->setByteLength(0);
-		toNetworkLayer(fwdPacket, recipientAddress.c_str());
+		toNetworkLayer(fwdPacket, "1");
 	}
 }
 
 void Manager::timerFiredCallback(int index)
 {
-	MyPacket *pktt = new MyPacket("mypacketrob", APPLICATION_PACKET);
 	switch (index) {
 		case SEND_PACKET:{
 			trace() << "Sending packet #" << dataSN;//sequence number
-			/*aqui que eu tenho que mudar para chamar as funções*/
-			//toNetworkLayer(createGenericDataPacket(0, dataSN), recipientAddress.c_str());
-
-			pktt->setExtraData(m_st_msg);
-			pktt->setSequenceNumber(dataSN);
-			Tmsg tmp = pktt->getExtraData();
-			trace() << tmp.send_str;
-			toNetworkLayer(pktt, recipientAddress.c_str());
-			packetsSent[recipientId]++;
+			toNetworkLayer(createGenericDataPackett(dataSN), "1");
 			dataSN++;
-			setTimer(SEND_PACKET, packet_spacing);
 			break;
 		}
 	}
@@ -113,70 +108,47 @@ void Manager::handleRadioControlMessage(RadioControlMessage *radioMsg)
 }
 
 void Manager::finishSpecific() {
-	declareOutput("Packets reception rate");
-	declareOutput("Packets loss rate");
+	//declareOutput("Packets reception rate");
+	//declareOutput("Packets loss rate");
 
-	cTopology *topo;	// temp variable to access packets received by other nodes
-	topo = new cTopology("topo");// instancia um objeto da classe cTopology e envia como parametro a palavra topo
-	//extrai os modulos (nós) que iremos trabalhar
-	topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());//Extracts model topology by the fully qualified NED type name of the modules. 
+	//cTopology *topo;	// temp variable to access packets received by other nodes
+	//topo = new cTopology("topo");// instancia um objeto da classe cTopology e envia como parametro a palavra topo
+	////extrai os modulos (nós) que iremos trabalhar
+	//topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());//Extracts model topology by the fully qualified NED type name of the modules. 
 
-	long bytesDelivered = 0;
-	for (int i = 0; i < numNodes; i++) {
-		//tenta converter a variável topo (que é do tipo cTopology para uma variável do tipo Manager em tempo de execução)
-		Manager *appModule = dynamic_cast<Manager*>
-			(topo->getNode(i)->getModule()->getSubmodule("Application"));
-		if (appModule) {
-			int packetsSent = appModule->getPacketsSent(self);
-			if (packetsSent > 0) { // this node sent us some packets
-				float rate = (float)packetsReceived[i]/packetsSent;
-				collectOutput("Packets reception rate", i, "total", rate);
-				collectOutput("Packets loss rate", i, "total", 1-rate);
-			}
+	//long bytesDelivered = 0;
+	//for (int i = 0; i < numNodes; i++) {
+		////tenta converter a variável topo (que é do tipo cTopology para uma variável do tipo Manager em tempo de execução)
+		//Manager *appModule = dynamic_cast<Manager*>
+			//(topo->getNode(i)->getModule()->getSubmodule("Application"));
+		//if (appModule) {
+			//int packetsSent = appModule->getPacketsSent(self);
+			//if (packetsSent > 0) { // this node sent us some packets
+				//float rate = (float)packetsReceived[i]/packetsSent;
+				//collectOutput("Packets reception rate", i, "total", rate);
+				//collectOutput("Packets loss rate", i, "total", 1-rate);
+			//}
 
-			bytesDelivered += appModule->getBytesReceived(self);
-		}
-	}
-	delete(topo);
+			//bytesDelivered += appModule->getBytesReceived(self);
+		//}
+	//}
+	//delete(topo);
 
-	if (packet_rate > 0 && bytesDelivered > 0) {
-		double energy = (resMgrModule->getSpentEnergy() * 1000000000)/(bytesDelivered * 8);	//in nanojoules/bit
-		declareOutput("Energy nJ/bit");
-		collectOutput("Energy nJ/bit","",energy);
-	}
-	//manager_finalize();
-	//MyPacket *pktt = new MyPacket("mypacketrob", APPLICATION_PACKET);
-	//pktt->setExtraData(m_st_msg);
-	//pktt->setSequenceNumber(dataSN);
-	//Tmsg tmp = pktt->getExtraData();
-	//trace() << tmp.send_str;
-	//toNetworkLayer(pktt, recipientAddress.c_str());
+	//if (packet_rate > 0 && bytesDelivered > 0) {
+		//double energy = (resMgrModule->getSpentEnergy() * 1000000000)/(bytesDelivered * 8);	//in nanojoules/bit
+		//declareOutput("Energy nJ/bit");
+		//collectOutput("Energy nJ/bit","",energy);
+	//}
+	manager_finalize();
 }
 
-MyPacket* Manager::createGenericDataPackett(MyPacket* data, unsigned int seqNum)
+MyPacket* Manager::createGenericDataPackett(unsigned int seqNum)
 {
-	MyPacket *newPacket = new MyPacket("app with arqu packet", APPLICATION_PACKET);
-	newPacket->setExtraData(m_st_msg);
-	newPacket->setSequenceNumber(seqNum);
-	//if (size > 0) newPacket->setByteLength(size);
-	return newPacket;
-}
-
-void Manager::print_buffer(intu8 *buffer, int size)
-{
-	char  *str = (char*)calloc(size*4, sizeof(char));
-
-	int i;
-
-	for (i = 0; i < size; i++) {
-		sprintf(str, "%s%.2X ", str, buffer[i]);
-	}
-
-	//DEBUG("%s", str);
-	trace() << str;
-
-	//fflush(stdout);
-	free(str);
-	//str = NULL;
+	MyPacket *pktt = new MyPacket("mypacket", APPLICATION_PACKET);
+	pktt->setExtraData(m_st_msg);
+	pktt->setSequenceNumber(seqNum);
+	Tmsg tmp = pktt->getExtraData();
+	trace() << tmp.send_str;
+	return pktt;
 }
 

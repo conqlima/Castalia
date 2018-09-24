@@ -71,10 +71,10 @@ static const int CASTALIA_ERROR_NONE = NETWORK_ERROR_NONE;
 static const int BACKLOG = 1;
 
 static int sk = -1;
-static int port = 0;
+static unsigned long long port = 0;
 static intu8 *buffer = NULL;
 static int buffer_size = 0;
-static int buffer_retry = 0;
+static int buffer_retry = -1;
 
 using namespace std;
 
@@ -119,15 +119,24 @@ static int network_castalia_wait_for_data(Context *ctx)
 {
 	DEBUG("network castalia: network_wait_for_data");
 
-	//if (sk < 0) {
-		//DEBUG("network castalia: network_wait_for_data error");
-		//return CASTALIA_ERROR;
-	//}
+	if (sk < 0) {
+		DEBUG("network castalia: network_wait_for_data error");
+		return CASTALIA_ERROR;
+	}
 
-	//if (buffer_retry) {
-		//// there may be another APDU in buffer already
-		//return CASTALIA_ERROR_NONE;
-	//}
+	if (buffer_retry != 0) {
+		// there may be another APDU in buffer already
+		if (buffer_retry == -1){
+		buffer_retry = buffer_retry + 1;
+		return CASTALIA_ERROR_NONE;
+		}else {
+		return CASTALIA_ERROR_NONE;
+		}
+	}
+	else{
+		ctx->connection_loop_active = 0;
+		return CASTALIA_ERROR;
+	}
 
 	//fd_set fds;
 
@@ -157,7 +166,7 @@ static int network_castalia_wait_for_data(Context *ctx)
 		//break;
 	//}
 
-	return CASTALIA_ERROR_NONE;
+	//return CASTALIA_ERROR_NONE;
 }
 
 /**
@@ -181,8 +190,8 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 	} else {
 		intu8 localbuf[65535];
 		/*modificado para castalia*/
-		write(sk, st_msg.recv_str.c_str(), strlen(st_msg.recv_str.c_str()));
-		int bytes_read = read(sk, localbuf, 65535);
+		int bytes_read = write(sk, st_msg.buff_msg, st_msg.tam_buff);
+		bytes_read = read(sk, localbuf, 65535);
 
 		if (bytes_read < 0) {
 			close(sk);
@@ -276,17 +285,19 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 		written += ret;
 	}
 	if ((stream->size) > 0){
-	char * str = new char[stream->size*4]();
+	char * str = new char[stream->size*4];
 
-	int i;
+	unsigned int i;
 	
 	for (i = 0; i < stream->size; i++) {
+		st_msg.buff_msg[i] = stream->buffer[i];
 		sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
+	st_msg.tam_buff = stream->size;
 	st_msg.send_str = str;
 	//DEBUG("%s", str);
 	//fflush(stdout);
-	delete(str);
+	delete[] str;
 	//str = NULL;
 	}
 	DEBUG(" network:CASTALIA APDU sent ");

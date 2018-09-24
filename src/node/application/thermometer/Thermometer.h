@@ -56,9 +56,8 @@ class Thermometer : public VirtualApplication {
 	int getPacketsSent(int addr) { return packetsSent[addr]; }
 	int getPacketsReceived(int addr) { return packetsReceived[addr]; }
 	int getBytesReceived(int addr) { return bytesReceived[addr]; }
-	void setTrace(const char* s);
-	MyPacket* createGenericDataPackett(MyPacket* data, unsigned int seqNum);
-	void print_buffer(intu8 *buffer, int size);
+	MyPacket* createGenericDataPackett(unsigned int seqNum);
+
 };
 
 #endif

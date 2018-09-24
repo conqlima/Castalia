@@ -38,6 +38,8 @@ extern "C"{
 #include "sample_agent_common.h"
 }
 
+Define_Module(Thermometer);
+
 /**
  * Port used by agent to send network data
  */
@@ -109,7 +111,7 @@ void castalia_mode()
 	// might not be the case!
 	CONTEXT_ID.plugin = 1;
 	CONTEXT_ID.connid = port;
-	plugin_network_castalia_agent_setup(&comm_plugin, 0);
+	plugin_network_castalia_agent_setup(&comm_plugin, port);
 }
 
 

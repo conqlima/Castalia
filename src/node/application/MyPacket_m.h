@@ -21,24 +21,27 @@
 extern "C" {
 #include "communication/plugin/plugin.h"
 #include "util/bytelib.h"
+#include "asn1/phd_types.h"
 }
 // }}
 
 /**
- * Struct generated from src/node/application/MyPacket.msg:13 by nedtool.
+ * Struct generated from src/node/application/MyPacket.msg:15 by nedtool.
  */
 struct Tmsg
 {
     Tmsg();
     opp_string send_str;
     opp_string recv_str;
+    uint8_t buff_msg[65535];
+    int tam_buff;
 };
 
 void doPacking(cCommBuffer *b, Tmsg& a);
 void doUnpacking(cCommBuffer *b, Tmsg& a);
 
 /**
- * Class generated from <tt>src/node/application/MyPacket.msg:18</tt> by nedtool.
+ * Class generated from <tt>src/node/application/MyPacket.msg:22</tt> by nedtool.
  * <pre>
  * packet MyPacket extends ApplicationPacket
  * {
