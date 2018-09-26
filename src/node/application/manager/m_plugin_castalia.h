@@ -33,7 +33,9 @@
 #ifndef _PLUGIN_CASTALIA_H_
 #define _PLUGIN_CASTALIA_H_
 
-#include <communication/plugin/plugin.h>
+extern "C"{
+#include "communication/plugin/plugin.h"
+}
 
 int m_plugin_network_castalia_manager_setup(CommunicationPlugin *plugin, int m_port);
 

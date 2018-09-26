@@ -74,7 +74,7 @@ static const int BACKLOG = 1;
 static int sk = -1;
 static intu8 *buffer = NULL;
 static int buffer_size = 0;
-static int buffer_retry = 0;
+static int buffer_retry = -1;
 
 using namespace std;
 
@@ -86,7 +86,7 @@ using namespace std;
  */
 static int m_init_socket()
 {
-	sk = open("castalia", O_RDWR | O_CREAT, 0644);
+	if ((sk = open("castalia", O_RDWR | O_CREAT, 0644)) < 0) return 0;
 	ContextId cid = {m_plugin_id, m_port};
 	communication_transport_connect_indication(cid, "castalia");
 	return 1;
@@ -134,7 +134,7 @@ static int m_network_castalia_wait_for_data(Context *ctx)
 		}
 	}
 	else{
-		ctx->connection_loop_active = 0;
+		//ctx->connection_loop_active = 0;
 		return CASTALIA_ERROR;
 	}
 
@@ -284,16 +284,16 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 
 		written += ret;
 	}
-		if ((stream->size) > 0){
+	if ((stream->size) > 0){
 	char * str = new char[stream->size*4];
 
 	unsigned int i;
 	
 	for (i = 0; i < stream->size; i++) {
-		m_st_msg.buff_msg[i] = stream->buffer[i];
+		m_st_msg.buff_msg[i+m_st_msg.tam_buff] = stream->buffer[i];
 		sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
-	m_st_msg.tam_buff = stream->size;
+	m_st_msg.tam_buff = sizeof(m_st_msg.buff_msg);
 	m_st_msg.send_str = str;
 	//DEBUG("%s", str);
 	//fflush(stdout);

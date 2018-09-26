@@ -38,7 +38,7 @@ void Manager::startup()
 	packetsReceived.clear();
 	bytesReceived.clear();
 
-	manager_start();
+	manager_start(m_CONTEXT_ID);
 }
 
 void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
@@ -139,7 +139,7 @@ void Manager::finishSpecific() {
 		//declareOutput("Energy nJ/bit");
 		//collectOutput("Energy nJ/bit","",energy);
 	//}
-	manager_finalize();
+	manager_finalize(m_CONTEXT_ID);
 }
 
 MyPacket* Manager::createGenericDataPackett(unsigned int seqNum)

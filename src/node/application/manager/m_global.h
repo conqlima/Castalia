@@ -4,10 +4,9 @@
 extern "C"{
 #include "communication/context.h"
 #include <time.h>
-#include <api/api_definitions.h>
-#include <communication/context.h>
-#include <communication/plugin/plugin.h>
-#include <communication/service.h>
+#include "api/api_definitions.h"
+#include "communication/plugin/plugin.h"
+#include "communication/service.h"
 }
 /**
  * m_port used by agent to send network data

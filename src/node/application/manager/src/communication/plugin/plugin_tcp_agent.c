@@ -60,7 +60,7 @@ unsigned int plugin_id = 0;
 
 static const int TCP_ERROR = NETWORK_ERROR;
 static const int TCP_ERROR_NONE = NETWORK_ERROR_NONE;
-static const int BACKLOG = 1;
+//static const int BACKLOG = 1;
 
 static int sk = -1;
 static int port = 0;

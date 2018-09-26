@@ -22,8 +22,8 @@ OPTS=" -f -r --deep -o CastaliaBin -u Cmdenv -P $ROOT -M debug"
 EXCLUDEDIRS=" -X Simulations -X out -X bin"
 
 # Use options -I -L -l to include external header files or libraries
-EXTOPTS="-I/usr/local/include/antidote -Isrc/node/application/thermometer/src/util/ -L/usr/local/lib -lantidote"
-
+#EXTOPTS="-I/usr/local/include/antidote -Isrc/node/application/thermometer/src/util/ -L/usr/local/lib -lantidote"
+EXTOPTS="-I/usr/local/include/antidote -L/usr/local/lib -lantidote"
 # Run OMNeT's opp_makemake tool with the above options
 opp_makemake $OPTS $EXCLUDEDIRS $EXTOPTS
 

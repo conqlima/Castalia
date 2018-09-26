@@ -38,7 +38,7 @@
 #define BYTELIB_H_
 
 #ifndef WIN32
-#include <asn1/phd_types.h>
+#include <src/asn1/phd_types.h>
 #else
 #include "src/asn1/phd_types.h"
 #endif

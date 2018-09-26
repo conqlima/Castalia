@@ -78,12 +78,12 @@ static const intu32 MDS_TO_GET = 3;
 /**
  * Time out (seconds) Confirm Set
  */
-static const intu32 MDS_TO_CONFIRM_SET = 3;
+//static const intu32 MDS_TO_CONFIRM_SET = 3;
 
 /**
  * Time out (seconds) Inter Service
  */
-static const intu32 MDS_TO_INTER_SERVICE = 3;
+//static const intu32 MDS_TO_INTER_SERVICE = 3;
 
 /**
  * Returns a new instance of an MDS object, with an empty object list.

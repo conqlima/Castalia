@@ -461,7 +461,6 @@ FSM_PROCESS_EVT_STATUS fsm_process_evt(FSMContext *ctx, fsm_events evt, FSMEvent
 	}
 
 	fflush(stdout);
-
 	return FSM_PROCESS_EVT_RESULT_NOT_PROCESSED;
 }
 

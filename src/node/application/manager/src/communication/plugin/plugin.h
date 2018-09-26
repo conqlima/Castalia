@@ -36,7 +36,7 @@
 #define PLUGIN_H_
 
 
-#include <util/bytelib.h>
+#include <src/util/bytelib.h>
 
 /**
  * Value returned to signal error condition
@@ -53,15 +53,15 @@
  */
 #define COMMUNICATION_PLUGIN_NULL {\
 			.network_init = NULL,\
-			.network_wait_for_data = NULL,\
+			.network_finalize = NULL,\
 			.network_get_apdu_stream = NULL,\
+			.network_wait_for_data = NULL,\
 			.network_send_apdu_stream = NULL,\
 			.network_disconnect = NULL,\
-			.network_finalize = NULL,\
-			.thread_init = NULL,\
-			.thread_finalize = NULL,\
 			.thread_lock = NULL,\
 			.thread_unlock = NULL,\
+			.thread_init = NULL,\
+			.thread_finalize = NULL,\
 			.timer_count_timeout = NULL,\
 			.timer_wait_for_timeout = NULL,\
 			.timer_reset_timeout = NULL, \

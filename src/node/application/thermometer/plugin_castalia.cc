@@ -64,7 +64,7 @@ extern "C"{
 
 Define_Module(Thermometer);
 
-unsigned int plugin_id = 0;
+unsigned int plugin_id = 1;
 
 static const int CASTALIA_ERROR = NETWORK_ERROR;
 static const int CASTALIA_ERROR_NONE = NETWORK_ERROR_NONE;
@@ -190,8 +190,14 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 	} else {
 		intu8 localbuf[65535];
 		/*modificado para castalia*/
-		int bytes_read = write(sk, st_msg.buff_msg, st_msg.tam_buff);
-		bytes_read = read(sk, localbuf, 65535);
+		//if (lseek(sk,0,SEEK_SET) < 0) return NULL;
+		for (int i = 0; i < st_msg.tam_buff; i++)
+		{
+			localbuf[i] = st_msg.buff_msg[i];
+		}
+		int bytes_read = sizeof(localbuf);
+		//int bytes_read = write(sk, st_msg.buff_msg, st_msg.tam_buff);
+		//bytes_read = read(sk, localbuf, 65535);
 
 		if (bytes_read < 0) {
 			close(sk);
@@ -293,6 +299,7 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 		st_msg.buff_msg[i] = stream->buffer[i];
 		sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
+	//read(sk, st_msg.buff_msg, stream->size);
 	st_msg.tam_buff = stream->size;
 	st_msg.send_str = str;
 	//DEBUG("%s", str);
@@ -332,7 +339,6 @@ static int network_disconnect(Context *ctx)
  */
 static int network_finalize()
 {
-
 	close(sk);
 	sk = -1;
 

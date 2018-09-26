@@ -1,3 +1,2 @@
-EXTRA_OBJS = src/node/application/thermometer/sample_agent_common.o src/node/application/thermometer/src/util/strbuff.o src/node/application/thermometer/src/util/ioutil.o
+EXTRA_OBJS = src/node/application/thermometer/sample_agent_common.o
 
-#MODE=debug

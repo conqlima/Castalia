@@ -43,7 +43,7 @@ void Thermometer::startup()
 	packetsReceived.clear();
 	bytesReceived.clear();
 
-	agent_start();
+	agent_start(CONTEXT_ID);
 	//agent_send_data(CONTEXT_ID);
 	//setTimer(SEND_PACKET, packet_spacing + startupDelay);
 	//signal(SIGALRM, sigalrm);
@@ -75,6 +75,7 @@ void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		ctx = context_get_and_lock(CONTEXT_ID);
 		//communication_connection_loop(ctx);
 		//while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
+		
 		communication_wait_for_data_input(ctx);
 		communication_read_input_stream(ctx->id);
 		context_unlock(ctx);
@@ -151,7 +152,7 @@ void Thermometer::finishSpecific() {
 	//}
 	agent_request_association_release(CONTEXT_ID);
 	agent_disconnect(CONTEXT_ID);
-	agent_finalize();
+	agent_finalize(CONTEXT_ID);
 }
 
 MyPacket* Thermometer::createGenericDataPackett(unsigned int seqNum)

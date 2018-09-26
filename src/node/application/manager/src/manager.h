@@ -77,11 +77,11 @@ typedef struct ManagerListener {
 #define MANAGER_LISTENER_EMPTY {\
 			.measurement_data_updated = NULL,\
 			.segment_data_received = NULL, \
-			.device_connected = NULL,\
-			.device_disconnected = NULL,\
 			.device_available = NULL,\
 			.device_unavailable = NULL,\
-			.timeout = NULL\
+			.timeout = NULL,\
+			.device_connected = NULL,\
+			.device_disconnected = NULL\
 			}
 
 void manager_init(CommunicationPlugin **plugins);
