@@ -50,8 +50,9 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
 	
 	Tmsg tmp = rcvPacket->getExtraData();
+	m_st_msg.tam_buff = tmp.tam_buff;
 	m_st_msg.recv_str = tmp.send_str;
-	for (int i = 0; i < 65535; i++)
+	for (int i = 0; i < m_st_msg.tam_buff; i++)
 	{
 		m_st_msg.buff_msg[i] = tmp.buff_msg[i];
 	}
@@ -63,13 +64,22 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		m_CONTEXT_ID = {2, 0};
 		Context *m_ctx;
 		m_ctx = context_get_and_lock(m_CONTEXT_ID);
+		
+		while((communication_wait_for_data_input(m_ctx)) == (NETWORK_ERROR_NONE))
+		communication_read_input_stream(m_ctx->id);
+		
 		//DEBUG("looping");
 		//communication_connection_loop(m_ctx);
-		communication_wait_for_data_input(m_ctx);
-		communication_read_input_stream(m_ctx->id);
+		//communication_wait_for_data_input(m_ctx);
+
 		context_unlock(m_ctx);
 		//manager_connection_loop(m_CONTEXT_ID);
 		setTimer(SEND_PACKET, packet_spacing);
+		//m_st_msg.tam_buff = 0;
+		//for (int i = 0; i < 65535; i++)
+		//{
+			//m_st_msg.buff_msg[i] = '\0';
+		//}
 	} else {
 		trace() << "Packet #" << sequenceNumber << " from node " << source <<
 			" exceeded delay limit of " << delayLimit << "s";
@@ -149,6 +159,11 @@ MyPacket* Manager::createGenericDataPackett(unsigned int seqNum)
 	pktt->setSequenceNumber(seqNum);
 	Tmsg tmp = pktt->getExtraData();
 	trace() << tmp.send_str;
+	m_st_msg.tam_buff = 0;
+	for (int i = 0; i < 65535; i++)
+	{
+	m_st_msg.buff_msg[i] = '\0';
+	}
 	return pktt;
 }
 

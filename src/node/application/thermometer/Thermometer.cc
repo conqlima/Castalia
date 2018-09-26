@@ -60,8 +60,9 @@ void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
 	
 	Tmsg tmp = rcvPacket->getExtraData();
+	st_msg.tam_buff = tmp.tam_buff;
 	st_msg.recv_str = tmp.send_str;
-	for (int i = 0; i < 65535; i++)
+	for (int i = 0; i < st_msg.tam_buff; i++)
 	{
 		st_msg.buff_msg[i] = tmp.buff_msg[i];
 	}
@@ -74,12 +75,18 @@ void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		Context *ctx;
 		ctx = context_get_and_lock(CONTEXT_ID);
 		//communication_connection_loop(ctx);
-		//while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
 		
-		communication_wait_for_data_input(ctx);
+		while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
 		communication_read_input_stream(ctx->id);
+		
+		//communication_wait_for_data_input(ctx);
 		context_unlock(ctx);
 		setTimer(SEND_PACKET, packet_spacing);
+		//st_msg.tam_buff = 0;
+		//for (int i = 0; i < 65535; i++)
+		//{
+			//st_msg.buff_msg[i] = '\0';
+		//}
 		} else {
 			trace() << "Packet #" << sequenceNumber << " from node " << source <<
 				" exceeded delay limit of " << delayLimit << "s";
@@ -162,6 +169,11 @@ MyPacket* Thermometer::createGenericDataPackett(unsigned int seqNum)
 	pktt->setSequenceNumber(seqNum);
 	Tmsg tmp = pktt->getExtraData();
 	trace() << tmp.send_str;
+	st_msg.tam_buff = 0;
+	for (int i = 0; i < 65535; i++)
+	{
+	st_msg.buff_msg[i] = '\0';
+	}
 	return pktt;
 }
 

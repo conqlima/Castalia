@@ -134,7 +134,8 @@ static int network_castalia_wait_for_data(Context *ctx)
 		}
 	}
 	else{
-		ctx->connection_loop_active = 0;
+		//ctx->connection_loop_active = 0;
+		buffer_retry = -1;
 		return CASTALIA_ERROR;
 	}
 
@@ -188,14 +189,16 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		// handling letover data in buffer
 		buffer_retry = 0;
 	} else {
+		int i;
 		intu8 localbuf[65535];
 		/*modificado para castalia*/
 		//if (lseek(sk,0,SEEK_SET) < 0) return NULL;
-		for (int i = 0; i < st_msg.tam_buff; i++)
+		for (i = 0; i < st_msg.tam_buff; i++)
 		{
 			localbuf[i] = st_msg.buff_msg[i];
 		}
-		int bytes_read = sizeof(localbuf);
+		st_msg.tam_buff = 0;
+		int bytes_read = i;
 		//int bytes_read = write(sk, st_msg.buff_msg, st_msg.tam_buff);
 		//bytes_read = read(sk, localbuf, 65535);
 
@@ -296,11 +299,10 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	unsigned int i;
 	
 	for (i = 0; i < stream->size; i++) {
-		st_msg.buff_msg[i] = stream->buffer[i];
+		st_msg.buff_msg[i+st_msg.tam_buff] = stream->buffer[i];
 		sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
-	//read(sk, st_msg.buff_msg, stream->size);
-	st_msg.tam_buff = stream->size;
+	st_msg.tam_buff += written;
 	st_msg.send_str = str;
 	//DEBUG("%s", str);
 	//fflush(stdout);
