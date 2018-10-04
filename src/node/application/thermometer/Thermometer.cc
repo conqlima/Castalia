@@ -13,6 +13,7 @@ void Thermometer::startup()
 	delayLimit = par("delayLimit");
 	packet_spacing = packet_rate > 0 ? 1 / float (packet_rate) : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 	dataSN = 0;// sequence number of data
+	alarmt = 3;
 	
 	/*codes from sample_agent.c*/
 	comm_plugin = communication_plugin();
@@ -28,8 +29,14 @@ void Thermometer::startup()
 	event_report_cb = oximeter_event_report_cb;
 	// change to 0x0191 if you want timestamps
 	specialization = 0x0190;
+	unsigned int nodeNumber = atoi(SELF_NETWORK_ADDRESS);
 	
-	agent_init(plugins, specialization, event_report_cb, mds_data_cb);
+	if (nodeNumber == 1)
+		CONTEXT_ID = {1, 0};
+	else
+		CONTEXT_ID = {(nodeNumber*2)-1, 0};
+	
+	agent_init(CONTEXT_ID, plugins, specialization, event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
 	listener.device_connected = &device_connected;
@@ -37,18 +44,15 @@ void Thermometer::startup()
 	listener.device_unavailable = &device_unavailable;
 
 	agent_add_listener(listener);
+	
+	agent_start(CONTEXT_ID);
+	setTimer(SEND_PACKET, packet_spacing + startupDelay);// define o timer para começar enviar pacotes
 
+	
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
 	packetsSent.clear(); //zera as posições do map
 	packetsReceived.clear();
 	bytesReceived.clear();
-
-	agent_start(CONTEXT_ID);
-	//agent_send_data(CONTEXT_ID);
-	//setTimer(SEND_PACKET, packet_spacing + startupDelay);
-	//signal(SIGALRM, sigalrm);
-	//agent_connection_loop(CONTEXT_ID);
-	setTimer(SEND_PACKET, packet_spacing + startupDelay);// define o timer para começar enviar pacotes
 }
 
 void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
@@ -71,32 +75,42 @@ void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
 		trace() << st_msg.recv_str;
 		trace() << "Received packet #" << sequenceNumber << " from node " << source;
-		CONTEXT_ID = {1, 0};
+		//CONTEXT_ID = {1, 0};
 		Context *ctx;
 		ctx = context_get_and_lock(CONTEXT_ID);
 		//communication_connection_loop(ctx);
 		
+		if (st_msg.tam_buff > 0){
 		while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
 		communication_read_input_stream(ctx->id);
-		
-		//communication_wait_for_data_input(ctx);
-		context_unlock(ctx);
 		setTimer(SEND_PACKET, packet_spacing);
-		//st_msg.tam_buff = 0;
-		//for (int i = 0; i < 65535; i++)
-		//{
-			//st_msg.buff_msg[i] = '\0';
-		//}
-		} else {
+		}
+		
+		if (ctx->fsm->state == fsm_state_operating && alarmt > 1){
+			agent_send_data(CONTEXT_ID);
+			--alarmt;
+			setTimer(SEND_PACKET, packet_spacing);
+			}
+		else if(alarmt == 1) {
+				agent_request_association_release(CONTEXT_ID);
+				--alarmt;
+				setTimer(SEND_PACKET, packet_spacing);
+			} else if (alarmt == 0){
+				agent_disconnect(CONTEXT_ID);
+				}
+			context_unlock(ctx);
+		}else{
 			trace() << "Packet #" << sequenceNumber << " from node " << source <<
 				" exceeded delay limit of " << delayLimit << "s";
-		}
+			}
+
 	}else {
 		ApplicationPacket* fwdPacket = rcvPacket->dup();
 		// Reset the size of the packet, otherwise the app overhead will keep adding on
 		fwdPacket->setByteLength(0);
 		toNetworkLayer(fwdPacket, "0");
 	}
+
 }
 
 void Thermometer::timerFiredCallback(int index)
@@ -106,7 +120,7 @@ void Thermometer::timerFiredCallback(int index)
 			trace() << "Sending packet #" << dataSN;//sequence number
 			toNetworkLayer(createGenericDataPackett(dataSN), "0");
 			dataSN++;
-			//setTimer(SEND_PACKET, packet_spacing);
+			setTimer(SEND_PACKET, packet_spacing);
 			break;
 		}
 	}
@@ -157,9 +171,9 @@ void Thermometer::finishSpecific() {
 		//declareOutput("Energy nJ/bit");
 		//collectOutput("Energy nJ/bit","",energy);
 	//}
-	agent_request_association_release(CONTEXT_ID);
-	agent_disconnect(CONTEXT_ID);
-	agent_finalize(CONTEXT_ID);
+	//agent_request_association_release(CONTEXT_ID);
+	//agent_disconnect(CONTEXT_ID);
+	//agent_finalize(CONTEXT_ID);
 }
 
 MyPacket* Thermometer::createGenericDataPackett(unsigned int seqNum)
@@ -169,11 +183,11 @@ MyPacket* Thermometer::createGenericDataPackett(unsigned int seqNum)
 	pktt->setSequenceNumber(seqNum);
 	Tmsg tmp = pktt->getExtraData();
 	trace() << tmp.send_str;
-	st_msg.tam_buff = 0;
-	for (int i = 0; i < 65535; i++)
-	{
-	st_msg.buff_msg[i] = '\0';
-	}
+	//st_msg.tam_buff = 0;
+	//for (int i = 0; i < tmp.tam_buff; i++)
+	//{
+	//st_msg.buff_msg[i] = '\0';
+	//}
 	return pktt;
 }
 

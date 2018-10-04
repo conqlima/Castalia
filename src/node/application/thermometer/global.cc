@@ -43,7 +43,7 @@ Define_Module(Thermometer);
 /**
  * Port used by agent to send network data
  */
-ContextId CONTEXT_ID = {1, 1};
+ContextId CONTEXT_ID = {1, 0};
 
 /**
  * PLugin definition
@@ -64,7 +64,7 @@ void timer_reset_timeout(Context *ctx)
 void device_associated(Context *ctx)
 {
 	fprintf(stderr, " main: Associated\n");
-	alarm(3);
+	//alarm(3);
 }
 
 void device_unavailable(Context *ctx)
@@ -90,10 +90,10 @@ void sigalrm(int dummy)
 	
 	if (alarms > 1) {
 		agent_send_data(CONTEXT_ID);
-		alarm(3);
+		//alarm(3);
 	} else if (alarms == 1) {
 		agent_request_association_release(CONTEXT_ID);
-		alarm(3);
+		//alarm(3);
 	} else {
 		agent_disconnect(CONTEXT_ID);
 	}

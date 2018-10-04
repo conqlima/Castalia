@@ -38,6 +38,7 @@ class Thermometer : public VirtualApplication {
 	int dataSN;
 	int recipientId;
 	string recipientAddress;
+	int alarmt;
 	
 	//variables below are used to determine the packet delivery rates.	
 	int numNodes;

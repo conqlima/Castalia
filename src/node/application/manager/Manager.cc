@@ -25,20 +25,26 @@ void Manager::startup()
 
 	
 	CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin, 0};
-	manager_init(m_comm_plugins);
-	
-	ManagerListener listener = MANAGER_LISTENER_EMPTY;
-	listener.measurement_data_updated = &new_data_received;
-	listener.device_available = &device_associated;
-
-	manager_add_listener(listener);
-	
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
+	unsigned int numPlugin = (2*(numNodes-1));
+	for (unsigned int i = 1; i <= numPlugin; i++)
+	{
+		if ( (i % 2) == 0){
+		m_CONTEXT_ID = {i,0};
+		manager_init(m_CONTEXT_ID, m_comm_plugins);
+		
+		ManagerListener listener = MANAGER_LISTENER_EMPTY;
+		listener.measurement_data_updated = &new_data_received;
+		listener.device_available = &device_associated;
+	
+		manager_add_listener(listener);
+		
+		manager_start(m_CONTEXT_ID);
+		}
+	}
 	packetsSent.clear(); //zera as posições do map
 	packetsReceived.clear();
 	bytesReceived.clear();
-
-	manager_start(m_CONTEXT_ID);
 }
 
 void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
@@ -47,8 +53,8 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	/*coloco a string recebida na estrutura*/
 	MyPacket * rcvPacket = check_and_cast<MyPacket*>(rcvPacketa);
 	int sequenceNumber = rcvPacket->getSequenceNumber();
-	int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
-	
+	unsigned int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
+	recipientAddress = source;
 	Tmsg tmp = rcvPacket->getExtraData();
 	m_st_msg.tam_buff = tmp.tam_buff;
 	m_st_msg.recv_str = tmp.send_str;
@@ -61,25 +67,20 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
 		trace() << m_st_msg.recv_str;
 		trace() << "Received packet #" << sequenceNumber << " from node " << source;
-		m_CONTEXT_ID = {2, 0};
+
+		if (m_st_msg.tam_buff > 0){
+		
+		m_CONTEXT_ID = {sourceId*2, 0};
 		Context *m_ctx;
 		m_ctx = context_get_and_lock(m_CONTEXT_ID);
 		
-		while((communication_wait_for_data_input(m_ctx)) == (NETWORK_ERROR_NONE))
+		while((communication_wait_for_data_input(m_ctx)) == NETWORK_ERROR_NONE)
 		communication_read_input_stream(m_ctx->id);
 		
-		//DEBUG("looping");
-		//communication_connection_loop(m_ctx);
-		//communication_wait_for_data_input(m_ctx);
-
 		context_unlock(m_ctx);
-		//manager_connection_loop(m_CONTEXT_ID);
 		setTimer(SEND_PACKET, packet_spacing);
-		//m_st_msg.tam_buff = 0;
-		//for (int i = 0; i < 65535; i++)
-		//{
-			//m_st_msg.buff_msg[i] = '\0';
-		//}
+		}
+		
 	} else {
 		trace() << "Packet #" << sequenceNumber << " from node " << source <<
 			" exceeded delay limit of " << delayLimit << "s";
@@ -88,7 +89,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		ApplicationPacket* fwdPacket = rcvPacket->dup();
 		// Reset the size of the packet, otherwise the app overhead will keep adding on
 		fwdPacket->setByteLength(0);
-		toNetworkLayer(fwdPacket, "1");
+		toNetworkLayer(fwdPacket, recipientAddress.c_str());
 	}
 }
 
@@ -97,7 +98,7 @@ void Manager::timerFiredCallback(int index)
 	switch (index) {
 		case SEND_PACKET:{
 			trace() << "Sending packet #" << dataSN;//sequence number
-			toNetworkLayer(createGenericDataPackett(dataSN), "1");
+			toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
 			dataSN++;
 			break;
 		}
@@ -149,7 +150,16 @@ void Manager::finishSpecific() {
 		//declareOutput("Energy nJ/bit");
 		//collectOutput("Energy nJ/bit","",energy);
 	//}
-	manager_finalize(m_CONTEXT_ID);
+	unsigned int numPlugin = 2*(numNodes-1);
+	for (unsigned int i = 1; i <= numPlugin; i++)
+	{
+		if ( (i % 2) == 0){
+		m_CONTEXT_ID = {i,0};
+		manager_finalize(m_CONTEXT_ID);
+		}
+	}
+	//m_CONTEXT_ID = {2, 0};
+	
 }
 
 MyPacket* Manager::createGenericDataPackett(unsigned int seqNum)

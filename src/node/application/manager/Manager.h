@@ -39,7 +39,7 @@ class Manager : public VirtualApplication {
 	string recipientAddress;
 	
 	//variables below are used to determine the packet delivery rates.	
-	int numNodes;
+	unsigned int numNodes;
 	map<long,int> packetsReceived;
 	map<long,int> bytesReceived;
 	map<long,int> packetsSent;

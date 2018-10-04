@@ -86,7 +86,8 @@ using namespace std;
  */
 static int init_socket()
 {
-	sk = open("castalia", O_RDWR | O_CREAT, 0644);
+	//sk = open("castalia", O_RDWR | O_CREAT, 0644);
+	sk = 3;
 	ContextId cid = {plugin_id, port};
 	communication_transport_connect_indication(cid, "castalia");
 	return 1;
@@ -197,13 +198,14 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		{
 			localbuf[i] = st_msg.buff_msg[i];
 		}
+		int bytes_read = st_msg.tam_buff;
 		st_msg.tam_buff = 0;
-		int bytes_read = i;
+		
 		//int bytes_read = write(sk, st_msg.buff_msg, st_msg.tam_buff);
 		//bytes_read = read(sk, localbuf, 65535);
 
 		if (bytes_read < 0) {
-			close(sk);
+			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -212,7 +214,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 			sk = -1;
 			return NULL;
 		} else if (bytes_read == 0) {
-			close(sk);
+			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -282,8 +284,8 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 #ifdef TEST_FRAGMENTATION
 		to_send = to_send > 50 ? 50 : to_send;
 #endif
-		int ret = write(sk, stream->buffer + written, to_send);
-
+		//int ret = write(sk, stream->buffer + written, to_send);
+		int ret = stream->size;
 		DEBUG(" network:CASTALIA sent %d bytes", to_send);
 
 		if (ret <= 0) {
@@ -294,19 +296,19 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 		written += ret;
 	}
 	if ((stream->size) > 0){
-	char * str = new char[stream->size*4];
+	//char * str = new char[stream->size*4];
 
 	unsigned int i;
 	
 	for (i = 0; i < stream->size; i++) {
 		st_msg.buff_msg[i+st_msg.tam_buff] = stream->buffer[i];
-		sprintf(str, "%s%.2X ", str, stream->buffer[i]);
+		//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
 	st_msg.tam_buff += written;
-	st_msg.send_str = str;
+	//st_msg.send_str = str;
 	//DEBUG("%s", str);
 	//fflush(stdout);
-	delete[] str;
+	//delete[] str;
 	//str = NULL;
 	}
 	DEBUG(" network:CASTALIA APDU sent ");
@@ -324,7 +326,7 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 static int network_disconnect(Context *ctx)
 {
 	DEBUG("taking the initiative of disconnection");
-	close(sk);
+	//close(sk);
 	sk = -1;
 	free(buffer);
 	buffer = 0;
@@ -341,7 +343,7 @@ static int network_disconnect(Context *ctx)
  */
 static int network_finalize()
 {
-	close(sk);
+	//close(sk);
 	sk = -1;
 
 	free(buffer);

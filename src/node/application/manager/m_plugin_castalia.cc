@@ -86,7 +86,8 @@ using namespace std;
  */
 static int m_init_socket()
 {
-	if ((sk = open("castalia", O_RDWR | O_CREAT, 0644)) < 0) return 0;
+	//if ((sk = open("castalia", O_RDWR | O_CREAT, 0644)) < 0) return 0;
+	sk = 3;
 	ContextId cid = {m_plugin_id, m_port};
 	communication_transport_connect_indication(cid, "castalia");
 	return 1;
@@ -195,11 +196,11 @@ static ByteStreamReader *m_network_get_apdu_stream(Context *ctx)
 		{
 			localbuf[i] = m_st_msg.buff_msg[i];
 		}
+		int bytes_read = m_st_msg.tam_buff;
 		m_st_msg.tam_buff = 0;
-		int bytes_read = i;
 
 		if (bytes_read < 0) {
-			close(sk);
+			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -208,7 +209,7 @@ static ByteStreamReader *m_network_get_apdu_stream(Context *ctx)
 			sk = -1;
 			return NULL;
 		} else if (bytes_read == 0) {
-			close(sk);
+			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -218,7 +219,14 @@ static ByteStreamReader *m_network_get_apdu_stream(Context *ctx)
 			return NULL;
 		}
 
-		buffer = (intu8*) realloc(buffer, buffer_size + bytes_read);
+		void *new_space = (intu8*) realloc(buffer, buffer_size + bytes_read);
+		if (new_space == 0){
+		DEBUG("an error has occurred");
+		return NULL;
+		}
+		buffer = (intu8*) new_space;
+		//buffer = (intu8*) realloc(buffer, buffer_size + bytes_read);
+		DEBUG("buffer_size = %d, bytes_read = %d", buffer_size, bytes_read);
 		memcpy(buffer + buffer_size, localbuf, bytes_read);
 		buffer_size += bytes_read;
 	}
@@ -278,8 +286,8 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 #ifdef TEST_FRAGMENTATION
 		to_send = to_send > 50 ? 50 : to_send;
 #endif
-		int ret = write(sk, stream->buffer + written, to_send);
-
+		//int ret = write(sk, stream->buffer + written, to_send);
+		int ret = stream->size;
 		DEBUG(" network:CASTALIA sent %d bytes", to_send);
 
 		if (ret <= 0) {
@@ -290,20 +298,15 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 		written += ret;
 	}
 	if ((stream->size) > 0){
-	char * str = new char[stream->size*4];
+	//char * str = new char[stream->size*4];
 
 	unsigned int i;
 	
 	for (i = 0; i < stream->size; i++) {
 		m_st_msg.buff_msg[i+m_st_msg.tam_buff] = stream->buffer[i];
-		sprintf(str, "%s%.2X ", str, stream->buffer[i]);
+		//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
 	m_st_msg.tam_buff += stream->size;
-	m_st_msg.send_str = str;
-	//DEBUG("%s", str);
-	//fflush(stdout);
-	delete[] str;
-	//str = NULL;
 	}
 	DEBUG(" network:CASTALIA APDU sent ");
 	ioutil_print_buffer(stream->buffer, stream->size);
@@ -320,7 +323,7 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 static int m_network_disconnect(Context *ctx)
 {
 	DEBUG("taking the initiative of disconnection");
-	close(sk);
+	//close(sk);
 	sk = -1;
 	free(buffer);
 	buffer = 0;
@@ -338,7 +341,7 @@ static int m_network_disconnect(Context *ctx)
 static int m_network_finalize()
 {
 
-	close(sk);
+	//close(sk);
 	sk = -1;
 
 	free(buffer);
