@@ -194,12 +194,12 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		intu8 localbuf[65535];
 		/*modificado para castalia*/
 		//if (lseek(sk,0,SEEK_SET) < 0) return NULL;
-		for (i = 0; i < st_msg.tam_buff; i++)
+		for (i = 0; i < st_msg[ctx->id.plugin].tam_buff; i++)
 		{
-			localbuf[i] = st_msg.buff_msg[i];
+			localbuf[i] = st_msg[ctx->id.plugin].buff_msg[i];
 		}
-		int bytes_read = st_msg.tam_buff;
-		st_msg.tam_buff = 0;
+		int bytes_read = st_msg[ctx->id.plugin].tam_buff;
+		st_msg[ctx->id.plugin].tam_buff = 0;
 		
 		//int bytes_read = write(sk, st_msg.buff_msg, st_msg.tam_buff);
 		//bytes_read = read(sk, localbuf, 65535);
@@ -301,10 +301,10 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	unsigned int i;
 	
 	for (i = 0; i < stream->size; i++) {
-		st_msg.buff_msg[i+st_msg.tam_buff] = stream->buffer[i];
+		st_msg[ctx->id.plugin].buff_msg[i+st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
 		//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
-	st_msg.tam_buff += written;
+	st_msg[ctx->id.plugin].tam_buff += written;
 	//st_msg.send_str = str;
 	//DEBUG("%s", str);
 	//fflush(stdout);

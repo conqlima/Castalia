@@ -1,7 +1,0 @@
-Castalia| what:ZigBeeMAC,GTSon,General (5)
-Castalia| when:2018-10-03 15:54
-Castalia| repeat:0 label:ZigBeeMAC,GTSon
-Castalia| repeat:1 label:ZigBeeMAC,GTSon
-Castalia| repeat:2 label:ZigBeeMAC,GTSon
-Castalia| repeat:3 label:ZigBeeMAC,GTSon
-Castalia| repeat:4 label:ZigBeeMAC,GTSon

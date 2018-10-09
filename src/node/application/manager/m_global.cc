@@ -54,6 +54,12 @@ CommunicationPlugin m_comm_plugin = COMMUNICATION_PLUGIN_NULL;
  */
 unsigned long long m_port = 0;
 
+void m_device_unavailable(Context *ctx)
+{
+	fprintf(stderr, " main: Disasociated\n");
+}
+
+
 /**
  * Callback function that is called whenever a new data
  * has been received.

@@ -20,11 +20,12 @@ extern CommunicationPlugin m_comm_plugin;
 
 extern unsigned long long m_port;
 
-extern Tmsg m_st_msg;
+extern Tmsg m_st_msg[11];
 
 void m_timer_reset_timeout(Context *ctx);
 int m_timer_count_timeout(Context *ctx);
 void device_associated(Context *ctx, DataList *list);
+void m_device_unavailable(Context *ctx);
 void device_reqmdsattr();
 void new_data_received(Context *ctx, DataList *list);
 void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu);

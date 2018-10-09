@@ -15,7 +15,7 @@ extern CommunicationPlugin comm_plugin;
 
 extern int alarms;
 
-extern Tmsg st_msg;
+extern Tmsg st_msg[11];
 
 void timer_reset_timeout(Context *ctx);
 int timer_count_timeout(Context *ctx);

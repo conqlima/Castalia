@@ -2,7 +2,7 @@
 
 Define_Module(Thermometer);
 
-Tmsg st_msg;
+Tmsg st_msg[11];
 
 void Thermometer::startup()
 {
@@ -14,6 +14,7 @@ void Thermometer::startup()
 	packet_spacing = packet_rate > 0 ? 1 / float (packet_rate) : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 	dataSN = 0;// sequence number of data
 	alarmt = 3;
+	last_packet = -1;
 	
 	/*codes from sample_agent.c*/
 	comm_plugin = communication_plugin();
@@ -31,11 +32,14 @@ void Thermometer::startup()
 	specialization = 0x0190;
 	unsigned int nodeNumber = atoi(SELF_NETWORK_ADDRESS);
 	
-	if (nodeNumber == 1)
+	if (nodeNumber == 1){
 		CONTEXT_ID = {1, 0};
-	else
+		my_plugin_number = CONTEXT_ID.plugin;
+	}
+	else{
 		CONTEXT_ID = {(nodeNumber*2)-1, 0};
-	
+		my_plugin_number = CONTEXT_ID.plugin;
+	}
 	agent_init(CONTEXT_ID, plugins, specialization, event_report_cb, mds_data_cb);
 
 	AgentListener listener = AGENT_LISTENER_EMPTY;
@@ -43,11 +47,12 @@ void Thermometer::startup()
 	listener.device_associated = &device_associated;
 	listener.device_unavailable = &device_unavailable;
 
-	agent_add_listener(listener);
+	agent_add_listener(CONTEXT_ID, listener);
 	
 	agent_start(CONTEXT_ID);
+	
 	setTimer(SEND_PACKET, packet_spacing + startupDelay);// define o timer para começar enviar pacotes
-
+	dataSN++;
 	
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
 	packetsSent.clear(); //zera as posições do map
@@ -58,43 +63,62 @@ void Thermometer::startup()
 void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		const char *source, double rssi, double lqi)
 {
-	/*coloco a string recebida na estrutura*/
-	MyPacket * rcvPacket = check_and_cast<MyPacket*>(rcvPacketa);
-	int sequenceNumber = rcvPacket->getSequenceNumber();
-	int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
-	
-	Tmsg tmp = rcvPacket->getExtraData();
-	st_msg.tam_buff = tmp.tam_buff;
-	st_msg.recv_str = tmp.send_str;
-	for (int i = 0; i < st_msg.tam_buff; i++)
-	{
-		st_msg.buff_msg[i] = tmp.buff_msg[i];
-	}
+		/*coloco a string recebida na estrutura*/
+		MyPacket * rcvPacket = check_and_cast<MyPacket*>(rcvPacketa);
+		int sequenceNumber = rcvPacket->getSequenceNumber();
+		int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
+		
+		
+		for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
+		{
+		st_msg[my_plugin_number].buff_msg[i] = '\0';
+		}
+		st_msg[my_plugin_number].tam_buff = 0;
+		
+		if (sequenceNumber != last_packet) {
+			
+			last_packet = sequenceNumber;
+		
+		Tmsg tmp = rcvPacket->getExtraData();
+		st_msg[my_plugin_number].tam_buff = tmp.tam_buff;
+		st_msg[my_plugin_number].recv_str = tmp.send_str;
+		for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
+		{
+			st_msg[my_plugin_number].buff_msg[i] = tmp.buff_msg[i];
+		}
 		if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
+		
+		cancelTimer(SEND_PACKET);
+		
 		//delaylimit == 0 (sem limite) ou o tempo atual da simulação menos a hora q o pacote foi criado
 		if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
-		trace() << st_msg.recv_str;
+		//trace() << st_msg.recv_str;
 		trace() << "Received packet #" << sequenceNumber << " from node " << source;
-		//CONTEXT_ID = {1, 0};
+
 		Context *ctx;
+		CONTEXT_ID = {my_plugin_number, 0};
 		ctx = context_get_and_lock(CONTEXT_ID);
-		//communication_connection_loop(ctx);
+
 		
-		if (st_msg.tam_buff > 0){
+		if (st_msg[my_plugin_number].tam_buff > 0){
 		while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
 		communication_read_input_stream(ctx->id);
+		
 		setTimer(SEND_PACKET, packet_spacing);
+		dataSN++;
 		}
 		
 		if (ctx->fsm->state == fsm_state_operating && alarmt > 1){
 			agent_send_data(CONTEXT_ID);
 			--alarmt;
 			setTimer(SEND_PACKET, packet_spacing);
+			dataSN++;
 			}
 		else if(alarmt == 1) {
 				agent_request_association_release(CONTEXT_ID);
 				--alarmt;
 				setTimer(SEND_PACKET, packet_spacing);
+				dataSN++;
 			} else if (alarmt == 0){
 				agent_disconnect(CONTEXT_ID);
 				}
@@ -104,13 +128,14 @@ void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 				" exceeded delay limit of " << delayLimit << "s";
 			}
 
-	}else {
-		ApplicationPacket* fwdPacket = rcvPacket->dup();
-		// Reset the size of the packet, otherwise the app overhead will keep adding on
-		fwdPacket->setByteLength(0);
-		toNetworkLayer(fwdPacket, "0");
+		}else {
+			ApplicationPacket* fwdPacket = rcvPacket->dup();
+			// Reset the size of the packet, otherwise the app overhead will keep adding on
+			fwdPacket->setByteLength(0);
+			toNetworkLayer(fwdPacket, "0");
+			dataSN++;
+		}
 	}
-
 }
 
 void Thermometer::timerFiredCallback(int index)
@@ -119,7 +144,7 @@ void Thermometer::timerFiredCallback(int index)
 		case SEND_PACKET:{
 			trace() << "Sending packet #" << dataSN;//sequence number
 			toNetworkLayer(createGenericDataPackett(dataSN), "0");
-			dataSN++;
+			//dataSN++;
 			setTimer(SEND_PACKET, packet_spacing);
 			break;
 		}
@@ -179,14 +204,14 @@ void Thermometer::finishSpecific() {
 MyPacket* Thermometer::createGenericDataPackett(unsigned int seqNum)
 {
 	MyPacket *pktt = new MyPacket("mypacket", APPLICATION_PACKET);
-	pktt->setExtraData(st_msg);
+	pktt->setExtraData(st_msg[my_plugin_number]);
 	pktt->setSequenceNumber(seqNum);
-	Tmsg tmp = pktt->getExtraData();
-	trace() << tmp.send_str;
-	//st_msg.tam_buff = 0;
-	//for (int i = 0; i < tmp.tam_buff; i++)
+	//Tmsg tmp = pktt->getExtraData();
+	//trace() << tmp.send_str;
+	//st_msg[my_plugin_number].tam_buff = 0;
+	//for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
 	//{
-	//st_msg.buff_msg[i] = '\0';
+	//st_msg[my_plugin_number].buff_msg[i] = '\0';
 	//}
 	return pktt;
 }

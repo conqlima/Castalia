@@ -192,12 +192,12 @@ static ByteStreamReader *m_network_get_apdu_stream(Context *ctx)
 	} else {
 		int i;
 		intu8 localbuf[65535];
-		for (i = 0; i < m_st_msg.tam_buff; i++)
+		for (i = 0; i < m_st_msg[ctx->id.plugin].tam_buff; i++)
 		{
-			localbuf[i] = m_st_msg.buff_msg[i];
+			localbuf[i] = m_st_msg[ctx->id.plugin].buff_msg[i];
 		}
-		int bytes_read = m_st_msg.tam_buff;
-		m_st_msg.tam_buff = 0;
+		int bytes_read = m_st_msg[ctx->id.plugin].tam_buff;
+		m_st_msg[ctx->id.plugin].tam_buff = 0;
 
 		if (bytes_read < 0) {
 			//close(sk);
@@ -303,10 +303,17 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	unsigned int i;
 	
 	for (i = 0; i < stream->size; i++) {
-		m_st_msg.buff_msg[i+m_st_msg.tam_buff] = stream->buffer[i];
+		m_st_msg[ctx->id.plugin].buff_msg[i+m_st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
 		//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
-	m_st_msg.tam_buff += stream->size;
+	m_st_msg[ctx->id.plugin].tam_buff += stream->size;
+	
+	//for (int i = m_st_msg.tam_buff; i < 65535; i++)
+	//{
+		//m_st_msg.buff_msg[i] = '\0';
+	//}
+	
+	
 	}
 	DEBUG(" network:CASTALIA APDU sent ");
 	ioutil_print_buffer(stream->buffer, stream->size);

@@ -37,6 +37,9 @@ class Manager : public VirtualApplication {
 	int dataSN;
 	int recipientId;
 	string recipientAddress;
+	int last_packet[6];
+	int my_plugin_number;
+
 	
 	//variables below are used to determine the packet delivery rates.	
 	unsigned int numNodes;
