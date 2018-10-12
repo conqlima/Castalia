@@ -62,12 +62,6 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	my_plugin_number = recipientId*2;
 	
 	if (sequenceNumber != last_packet[sourceId]) {
-		
-	//for (int i = 0; i < m_st_msg.tam_buff; i++)
-	//{
-		//m_st_msg.buff_msg[i] = '\0';
-	//}
-	//m_st_msg.tam_buff = 0;
 	
 	last_packet[sourceId] = sequenceNumber;
 	
@@ -97,6 +91,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 			
 			context_unlock(m_ctx);
 			dataSN++;
+			
 			setTimer(SEND_PACKET, packet_spacing);
 			}
 			
@@ -171,14 +166,14 @@ void Manager::finishSpecific() {
 		//declareOutput("Energy nJ/bit");
 		//collectOutput("Energy nJ/bit","",energy);
 	//}
-	unsigned int numPlugin = (2*(numNodes-1));
-	for (unsigned int i = 1; i <= numPlugin; i++)
-	{
-		if ( (i % 2) == 0){
-		m_CONTEXT_ID = {i,0};
+	//unsigned int numPlugin = (2*(numNodes-1));
+	//for (unsigned int i = 1; i <= numPlugin; i++)
+	//{
+		//if ( (i % 2) == 0){
+		//m_CONTEXT_ID = {i,0};
 		manager_finalize(m_CONTEXT_ID);
-		}
-	}
+		//}
+	//}
 	//m_CONTEXT_ID = {2, 0};
 	
 }

@@ -304,7 +304,14 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 		st_msg[ctx->id.plugin].buff_msg[i+st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
 		//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 	}
-	st_msg[ctx->id.plugin].tam_buff += written;
+	//st_msg[ctx->id.plugin].tam_buff += written;
+	st_msg[ctx->id.plugin].tam_buff += stream->size;
+	
+	for (int i = st_msg[ctx->id.plugin].tam_buff; i < 65535; i++)
+	{
+		st_msg[ctx->id.plugin].buff_msg[i] = '\0';
+	}
+	
 	//st_msg.send_str = str;
 	//DEBUG("%s", str);
 	//fflush(stdout);
@@ -327,11 +334,11 @@ static int network_disconnect(Context *ctx)
 {
 	DEBUG("taking the initiative of disconnection");
 	//close(sk);
-	sk = -1;
+	//sk = -1;
 	free(buffer);
 	buffer = 0;
 	buffer_size = 0;
-	buffer_retry = 0;
+	//buffer_retry = 0;
 
 	return CASTALIA_ERROR_NONE;
 }
@@ -344,7 +351,7 @@ static int network_disconnect(Context *ctx)
 static int network_finalize()
 {
 	//close(sk);
-	sk = -1;
+	//sk = -1;
 
 	free(buffer);
 	buffer = 0;

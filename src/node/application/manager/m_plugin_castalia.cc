@@ -308,10 +308,10 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	}
 	m_st_msg[ctx->id.plugin].tam_buff += stream->size;
 	
-	//for (int i = m_st_msg.tam_buff; i < 65535; i++)
-	//{
-		//m_st_msg.buff_msg[i] = '\0';
-	//}
+	for (int i = m_st_msg[ctx->id.plugin].tam_buff; i < 65535; i++)
+	{
+		m_st_msg[ctx->id.plugin].buff_msg[i] = '\0';
+	}
 	
 	
 	}
@@ -349,7 +349,7 @@ static int m_network_finalize()
 {
 
 	//close(sk);
-	sk = -1;
+	//sk = -1;
 
 	free(buffer);
 	buffer = 0;

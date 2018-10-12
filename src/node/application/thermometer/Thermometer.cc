@@ -121,6 +121,7 @@ void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 				dataSN++;
 			} else if (alarmt == 0){
 				agent_disconnect(CONTEXT_ID);
+				--alarmt;
 				}
 			context_unlock(ctx);
 		}else{
