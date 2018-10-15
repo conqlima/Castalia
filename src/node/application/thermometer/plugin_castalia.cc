@@ -42,13 +42,13 @@ extern "C"{
 #include "util/log.h"
 #include "util/ioutil.h"
 }
+
 #include "CastaliaModule.h"
 #include "VirtualApplication.h"
 #include "MyPacket_m.h"
 #include "plugin_castalia.h"
 #include "global.h"
 #include "Thermometer.h"
-
 
 #include <cstdio>
 #include <cstdlib>
@@ -86,7 +86,6 @@ using namespace std;
  */
 static int init_socket()
 {
-	//sk = open("castalia", O_RDWR | O_CREAT, 0644);
 	sk = 3;
 	ContextId cid = {plugin_id, port};
 	communication_transport_connect_indication(cid, "castalia");
@@ -128,47 +127,17 @@ static int network_castalia_wait_for_data(Context *ctx)
 	if (buffer_retry != 0) {
 		// there may be another APDU in buffer already
 		if (buffer_retry == -1){
-		buffer_retry = buffer_retry + 1;
-		return CASTALIA_ERROR_NONE;
-		}else {
-		return CASTALIA_ERROR_NONE;
-		}
-	}
-	else{
-		//ctx->connection_loop_active = 0;
+			buffer_retry = buffer_retry + 1;
+			//return CASTALIA_ERROR_NONE;
+		}//else {
+			//return CASTALIA_ERROR_NONE;
+		//}
+	}else {
 		buffer_retry = -1;
 		return CASTALIA_ERROR;
 	}
 
-	//fd_set fds;
-
-	//int ret_value;
-
-	//while (1) {
-		//if (sk < 0) {
-			//return CASTALIA_ERROR;
-		//}
-
-		//FD_ZERO(&fds);
-		//FD_SET(sk, &fds);
-
-		//ret_value = select(sk + 1, &fds, NULL, NULL, NULL);
-		//if (ret_value < 0) {
-			//if (errno == EINTR) {
-				//DEBUG(" network:fd Select failed with EINTR");
-				//continue;
-			//}
-			//DEBUG(" network:fd Select failed");
-			//return CASTALIA_ERROR;
-		//} else if (ret_value == 0) {
-			//DEBUG(" network:fd Select timeout");
-			//return CASTALIA_ERROR;
-		//}
-
-		//break;
-	//}
-
-	//return CASTALIA_ERROR_NONE;
+	return CASTALIA_ERROR_NONE;
 }
 
 /**
@@ -192,20 +161,17 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 	} else {
 		int i;
 		intu8 localbuf[65535];
-		/*modificado para castalia*/
-		//if (lseek(sk,0,SEEK_SET) < 0) return NULL;
+		
+		/*Transfere dados de st_msg para localbuf*/
 		for (i = 0; i < st_msg[ctx->id.plugin].tam_buff; i++)
 		{
 			localbuf[i] = st_msg[ctx->id.plugin].buff_msg[i];
 		}
+		
 		int bytes_read = st_msg[ctx->id.plugin].tam_buff;
 		st_msg[ctx->id.plugin].tam_buff = 0;
-		
-		//int bytes_read = write(sk, st_msg.buff_msg, st_msg.tam_buff);
-		//bytes_read = read(sk, localbuf, 65535);
 
 		if (bytes_read < 0) {
-			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -214,7 +180,6 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 			sk = -1;
 			return NULL;
 		} else if (bytes_read == 0) {
-			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -295,29 +260,27 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 
 		written += ret;
 	}
+	
 	if ((stream->size) > 0){
-	//char * str = new char[stream->size*4];
+		unsigned int i;
+		
+		/*Copia conteúdo de stream->buffer para m_st_msg*/
+		for (i = 0; i < stream->size; i++) {
+			st_msg[ctx->id.plugin].buff_msg[i+st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
+			//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
+		}
+		
+		/*Caso o pacote tenha duas mensagens, o tamanho do pacote
+		 * deve ser o tamanho da msg1 + msg2 + ...*/
+		st_msg[ctx->id.plugin].tam_buff += stream->size;
+		
+		/*limpa o restanto do pacote*/
+		for (int i = st_msg[ctx->id.plugin].tam_buff; i < 65535; i++) {
+			st_msg[ctx->id.plugin].buff_msg[i] = '\0';
+		}
 
-	unsigned int i;
-	
-	for (i = 0; i < stream->size; i++) {
-		st_msg[ctx->id.plugin].buff_msg[i+st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
-		//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
-	}
-	//st_msg[ctx->id.plugin].tam_buff += written;
-	st_msg[ctx->id.plugin].tam_buff += stream->size;
-	
-	for (int i = st_msg[ctx->id.plugin].tam_buff; i < 65535; i++)
-	{
-		st_msg[ctx->id.plugin].buff_msg[i] = '\0';
 	}
 	
-	//st_msg.send_str = str;
-	//DEBUG("%s", str);
-	//fflush(stdout);
-	//delete[] str;
-	//str = NULL;
-	}
 	DEBUG(" network:CASTALIA APDU sent ");
 	ioutil_print_buffer(stream->buffer, stream->size);
 	
@@ -333,13 +296,9 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 static int network_disconnect(Context *ctx)
 {
 	DEBUG("taking the initiative of disconnection");
-	//close(sk);
-	//sk = -1;
 	free(buffer);
 	buffer = 0;
 	buffer_size = 0;
-	//buffer_retry = 0;
-
 	return CASTALIA_ERROR_NONE;
 }
 
@@ -350,21 +309,11 @@ static int network_disconnect(Context *ctx)
  */
 static int network_finalize()
 {
-	//close(sk);
-	//sk = -1;
-
 	free(buffer);
 	buffer = 0;
 	buffer_size = 0;
-
 	return CASTALIA_ERROR_NONE;
 }
-
-//static int create_socket(int pport)
-//{
-	//DEBUG("network castalia: creating socket configuration");
-	//return CASTALIA_ERROR_NONE;
-//}
 
 /**
  * Initiate a CommunicationPlugin struct to use CASTALIA connection.

@@ -1,3 +1,0 @@
-dim.lo: dim.c /usr/include/stdc-predef.h
-
-/usr/include/stdc-predef.h:

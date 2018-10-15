@@ -4,7 +4,7 @@
 #include "communication/context.h"
 
 /**
- * Port used by agent to send network data
+ * Plugin used by agent to send network data
  */
 extern ContextId CONTEXT_ID;
 
@@ -13,8 +13,9 @@ extern ContextId CONTEXT_ID;
  */
 extern CommunicationPlugin comm_plugin;
 
-extern int alarms;
-
+/**
+ * Struct to represent the messages exchanged
+ */
 extern Tmsg st_msg[11];
 
 void timer_reset_timeout(Context *ctx);

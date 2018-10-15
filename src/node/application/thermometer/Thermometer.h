@@ -39,7 +39,7 @@ class Thermometer : public VirtualApplication {
 	int recipientId;
 	string recipientAddress;
 	int alarmt;
-	int my_plugin_number;
+	unsigned int my_plugin_number;
 	int last_packet;
 	
 	//variables below are used to determine the packet delivery rates.	
@@ -59,7 +59,7 @@ class Thermometer : public VirtualApplication {
 	int getPacketsSent(int addr) { return packetsSent[addr]; }
 	int getPacketsReceived(int addr) { return packetsReceived[addr]; }
 	int getBytesReceived(int addr) { return bytesReceived[addr]; }
-	MyPacket* createGenericDataPackett(unsigned int seqNum);
+	MyPacket* createGenericDataPackett(int seqNum);
 
 };
 

@@ -37,5 +37,4 @@
 
 int plugin_network_castalia_agent_setup(CommunicationPlugin *plugin, int port);
 
-
 #endif /*_PLUGIN_CASTALIA_H_*/

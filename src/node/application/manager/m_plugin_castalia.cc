@@ -36,7 +36,7 @@
  * @addtogroup ManagerCASTALIAPlugin
  * @{
  */
-extern "C"{
+extern "C" {
 #include "util/strbuff.h"
 #include "communication/communication.h"
 #include "communication/service.h"
@@ -44,6 +44,7 @@ extern "C"{
 #include "util/ioutil.h"
 #include "manager.h"
 }
+
 #include "CastaliaModule.h"
 #include "VirtualApplication.h"
 #include "MyPacket_m.h"
@@ -86,7 +87,7 @@ using namespace std;
  */
 static int m_init_socket()
 {
-	//if ((sk = open("castalia", O_RDWR | O_CREAT, 0644)) < 0) return 0;
+	/*Var. para controlar a inicialização e finalização dos dispositivos*/
 	sk = 3;
 	ContextId cid = {m_plugin_id, m_port};
 	communication_transport_connect_indication(cid, "castalia");
@@ -126,48 +127,20 @@ static int m_network_castalia_wait_for_data(Context *ctx)
 	}
 
 	if (buffer_retry != 0) {
+		
 		// there may be another APDU in buffer already
 		if (buffer_retry == -1){
-		buffer_retry = buffer_retry + 1;
-		return CASTALIA_ERROR_NONE;
-		}else {
-		return CASTALIA_ERROR_NONE;
+			buffer_retry = buffer_retry + 1;
+			//return CASTALIA_ERROR_NONE;
 		}
-	}
-	else{
-		//ctx->connection_loop_active = 0;
+		//else {
+			//return CASTALIA_ERROR_NONE;
+		//}
+	}else {
 		buffer_retry = -1;
 		return CASTALIA_ERROR;
 	}
-
-	//fd_set fds;
-
-	//int ret_value;
-
-	//while (1) {
-		//if (sk < 0) {
-			//return CASTALIA_ERROR;
-		//}
-
-		//FD_ZERO(&fds);
-		//FD_SET(sk, &fds);
-
-		//ret_value = select(sk + 1, &fds, NULL, NULL, NULL);
-		//if (ret_value < 0) {
-			//if (errno == EINTR) {
-				//DEBUG(" network:fd Select failed with EINTR");
-				//continue;
-			//}
-			//DEBUG(" network:fd Select failed");
-			//return CASTALIA_ERROR;
-		//} else if (ret_value == 0) {
-			//DEBUG(" network:fd Select timeout");
-			//return CASTALIA_ERROR;
-		//}
-
-		//break;
-	//}
-
+	
 	return CASTALIA_ERROR_NONE;
 }
 
@@ -192,15 +165,17 @@ static ByteStreamReader *m_network_get_apdu_stream(Context *ctx)
 	} else {
 		int i;
 		intu8 localbuf[65535];
+		
+		/*Transfere dados de m_st_msg para localbuf*/
 		for (i = 0; i < m_st_msg[ctx->id.plugin].tam_buff; i++)
 		{
 			localbuf[i] = m_st_msg[ctx->id.plugin].buff_msg[i];
 		}
+		
 		int bytes_read = m_st_msg[ctx->id.plugin].tam_buff;
 		m_st_msg[ctx->id.plugin].tam_buff = 0;
 
 		if (bytes_read < 0) {
-			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -209,7 +184,6 @@ static ByteStreamReader *m_network_get_apdu_stream(Context *ctx)
 			sk = -1;
 			return NULL;
 		} else if (bytes_read == 0) {
-			//close(sk);
 			free(buffer);
 			buffer = 0;
 			buffer_size = 0;
@@ -221,12 +195,12 @@ static ByteStreamReader *m_network_get_apdu_stream(Context *ctx)
 
 		void *new_space = (intu8*) realloc(buffer, buffer_size + bytes_read);
 		if (new_space == 0){
-		DEBUG("an error has occurred");
-		return NULL;
+			DEBUG("an error has occurred");
+			return NULL;
 		}
+		
 		buffer = (intu8*) new_space;
-		//buffer = (intu8*) realloc(buffer, buffer_size + bytes_read);
-		DEBUG("buffer_size = %d, bytes_read = %d", buffer_size, bytes_read);
+		//DEBUG("buffer_size = %d, bytes_read = %d", buffer_size, bytes_read);
 		memcpy(buffer + buffer_size, localbuf, bytes_read);
 		buffer_size += bytes_read;
 	}
@@ -297,24 +271,27 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 
 		written += ret;
 	}
-	if ((stream->size) > 0){
-	//char * str = new char[stream->size*4];
-
-	unsigned int i;
 	
-	for (i = 0; i < stream->size; i++) {
-		m_st_msg[ctx->id.plugin].buff_msg[i+m_st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
-		//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
+	if ((stream->size) > 0) {
+		unsigned int i;
+		
+		/*Copia conteúdo de stream->buffer para m_st_msg*/
+		for (i = 0; i < stream->size; i++) {
+			m_st_msg[ctx->id.plugin].buff_msg[i+m_st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
+			//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
+		}
+		
+		/*Caso o pacote tenha duas mensagens, o tamanho do pacote
+		 * deve ser o tamanho da msg1 + msg2 + ...*/
+		m_st_msg[ctx->id.plugin].tam_buff += stream->size;
+		
+		/*limpa o restanto do pacote*/
+		for (int i = m_st_msg[ctx->id.plugin].tam_buff; i < 65535; i++) {
+			m_st_msg[ctx->id.plugin].buff_msg[i] = '\0';
+		}
+	
 	}
-	m_st_msg[ctx->id.plugin].tam_buff += stream->size;
 	
-	for (int i = m_st_msg[ctx->id.plugin].tam_buff; i < 65535; i++)
-	{
-		m_st_msg[ctx->id.plugin].buff_msg[i] = '\0';
-	}
-	
-	
-	}
 	DEBUG(" network:CASTALIA APDU sent ");
 	ioutil_print_buffer(stream->buffer, stream->size);
 	
@@ -347,22 +324,12 @@ static int m_network_disconnect(Context *ctx)
  */
 static int m_network_finalize()
 {
-
-	//close(sk);
-	//sk = -1;
-
 	free(buffer);
 	buffer = 0;
 	buffer_size = 0;
 
 	return CASTALIA_ERROR_NONE;
 }
-
-//static int create_socket(int pport)
-//{
-	//DEBUG("network castalia: creating socket configuration");
-	//return CASTALIA_ERROR_NONE;
-//}
 
 /**
  * Initiate a CommunicationPlugin struct to use CASTALIA connection.

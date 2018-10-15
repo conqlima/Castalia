@@ -13,7 +13,7 @@ void Thermometer::startup()
 	delayLimit = par("delayLimit");
 	packet_spacing = packet_rate > 0 ? 1 / float (packet_rate) : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 	dataSN = 0;// sequence number of data
-	alarmt = 3;
+	alarmt = 3;// var de controle para enviar dados
 	last_packet = -1;
 	
 	/*codes from sample_agent.c*/
@@ -27,16 +27,18 @@ void Thermometer::startup()
 	//void *event_report_cb;
 	int specialization;
 	
+	/*Defina aqui o agente*/
 	event_report_cb = oximeter_event_report_cb;
 	// change to 0x0191 if you want timestamps
 	specialization = 0x0190;
+	
 	unsigned int nodeNumber = atoi(SELF_NETWORK_ADDRESS);
 	
-	if (nodeNumber == 1){
+	/*Faz a inicialização do plugin*/
+	if (nodeNumber == 1) {
 		CONTEXT_ID = {1, 0};
 		my_plugin_number = CONTEXT_ID.plugin;
-	}
-	else{
+	}else {
 		CONTEXT_ID = {(nodeNumber*2)-1, 0};
 		my_plugin_number = CONTEXT_ID.plugin;
 	}
@@ -50,82 +52,96 @@ void Thermometer::startup()
 	agent_add_listener(CONTEXT_ID, listener);
 	
 	agent_start(CONTEXT_ID);
-	
-	setTimer(SEND_PACKET, packet_spacing + startupDelay);// define o timer para começar enviar pacotes
 	dataSN++;
+	setTimer(SEND_PACKET, packet_spacing + startupDelay);// define o timer para começar enviar pacotes
 	
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
+	
+	/*Variáveis utilizadas na função FinishEspefic()*/
 	packetsSent.clear(); //zera as posições do map
 	packetsReceived.clear();
 	bytesReceived.clear();
+	
+	declareOutput("Packets received per node");
 }
 
 void Thermometer::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		const char *source, double rssi, double lqi)
 {
-		/*coloco a string recebida na estrutura*/
-		MyPacket * rcvPacket = check_and_cast<MyPacket*>(rcvPacketa);
-		int sequenceNumber = rcvPacket->getSequenceNumber();
-		int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
-		
-		
-		for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
-		{
+	/*Converte o pacote recebido do formato ApplicationPacket
+	 * para MyPacket*/
+	MyPacket * rcvPacket = check_and_cast<MyPacket*>(rcvPacketa);
+	
+	/*Pega o número de sequencia do pacote recebido*/
+	int sequenceNumber = rcvPacket->getSequenceNumber();
+	
+	int sourceId = atoi(source);
+	
+	/*Limpa a variável st_msg antes de fazer qualquer coisa*/
+	for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
+	{
 		st_msg[my_plugin_number].buff_msg[i] = '\0';
-		}
-		st_msg[my_plugin_number].tam_buff = 0;
+	}
+	
+	st_msg[my_plugin_number].tam_buff = 0;
+	
+	
+	if (sequenceNumber != last_packet) {
 		
-		if (sequenceNumber != last_packet) {
-			
-			last_packet = sequenceNumber;
+		/*Verifica se é um pacote duplicado*/
+		last_packet = sequenceNumber;
 		
+		/*Recebe o pacote numa estrutura temporária*/
 		Tmsg tmp = rcvPacket->getExtraData();
 		st_msg[my_plugin_number].tam_buff = tmp.tam_buff;
-		st_msg[my_plugin_number].recv_str = tmp.send_str;
+		
+		/*Copia informação do pacote recebido para m_st_msg*/
 		for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
 		{
 			st_msg[my_plugin_number].buff_msg[i] = tmp.buff_msg[i];
 		}
+		
 		if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
 		
-		cancelTimer(SEND_PACKET);
-		
-		//delaylimit == 0 (sem limite) ou o tempo atual da simulação menos a hora q o pacote foi criado
-		if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
-		//trace() << st_msg.recv_str;
-		trace() << "Received packet #" << sequenceNumber << " from node " << source;
+			//delaylimit == 0 (sem limite) ou o tempo atual da simulação menos a hora q o pacote foi criado
+			if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
 
-		Context *ctx;
-		CONTEXT_ID = {my_plugin_number, 0};
-		ctx = context_get_and_lock(CONTEXT_ID);
+				trace() << "Received packet #" << sequenceNumber << " from node " << source;
+				collectOutput("Packets received per node", sourceId);//Adds one to the value of output name with index 3.
+				packetsReceived[sourceId]++;
+				bytesReceived[sourceId] += rcvPacket->getByteLength();
 
-		
-		if (st_msg[my_plugin_number].tam_buff > 0){
-		while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
-		communication_read_input_stream(ctx->id);
-		
-		setTimer(SEND_PACKET, packet_spacing);
-		dataSN++;
-		}
-		
-		if (ctx->fsm->state == fsm_state_operating && alarmt > 1){
-			agent_send_data(CONTEXT_ID);
-			--alarmt;
-			setTimer(SEND_PACKET, packet_spacing);
-			dataSN++;
-			}
-		else if(alarmt == 1) {
-				agent_request_association_release(CONTEXT_ID);
-				--alarmt;
-				setTimer(SEND_PACKET, packet_spacing);
-				dataSN++;
-			} else if (alarmt == 0){
-				agent_disconnect(CONTEXT_ID);
-				--alarmt;
+				Context *ctx;
+				CONTEXT_ID = {my_plugin_number, 0};
+				ctx = context_get_and_lock(CONTEXT_ID);
+				
+				/*verifica se no pacote recebido existe dados*/
+				if (st_msg[my_plugin_number].tam_buff > 0) {
+					/*ler todos os dados do buffer*/
+					while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
+						communication_read_input_stream(ctx->id);
 				}
-			context_unlock(ctx);
-		}else{
-			trace() << "Packet #" << sequenceNumber << " from node " << source <<
+				
+				/*Verifica se o agente já pode enviar leituras*/
+				if (ctx->fsm->state == fsm_state_operating && alarmt > 1) {
+					agent_send_data(CONTEXT_ID);
+					--alarmt;
+					dataSN++;
+					setTimer(SEND_PACKET, packet_spacing);
+				}else if (alarmt == 1) {
+						agent_request_association_release(CONTEXT_ID);
+						--alarmt;
+						dataSN++;
+						setTimer(SEND_PACKET, packet_spacing);
+				}else if (alarmt == 0) {
+						agent_disconnect(CONTEXT_ID);
+						--alarmt;
+				}
+				
+				context_unlock(ctx);
+				
+			}else {
+				trace() << "Packet #" << sequenceNumber << " from node " << source <<
 				" exceeded delay limit of " << delayLimit << "s";
 			}
 
@@ -143,9 +159,9 @@ void Thermometer::timerFiredCallback(int index)
 {
 	switch (index) {
 		case SEND_PACKET:{
-			trace() << "Sending packet #" << dataSN;//sequence number
-			toNetworkLayer(createGenericDataPackett(dataSN), "0");
-			//dataSN++;
+			//trace() << "Sending packet #" << dataSN;//sequence number
+			toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
+			packetsSent[recipientId]++;
 			setTimer(SEND_PACKET, packet_spacing);
 			break;
 		}
@@ -153,67 +169,56 @@ void Thermometer::timerFiredCallback(int index)
 
 }
 
-
 // This method processes a received carrier sense interupt. Used only for demo purposes
 // in some simulations. Feel free to comment out the trace command.
 void Thermometer::handleRadioControlMessage(RadioControlMessage *radioMsg)
 {
 	switch (radioMsg->getRadioControlMessageKind()) {
 		case CARRIER_SENSE_INTERRUPT:
-			//trace() << "CS Interrupt received! current RSSI value is: " << radioModule->readRSSI();
+			trace() << "CS Interrupt received! current RSSI value is: " << radioModule->readRSSI();
                         break;
 	}
 }
 
 void Thermometer::finishSpecific() {
-	//declareOutput("Packets reception rate");
-	//declareOutput("Packets loss rate");
+	declareOutput("Packets reception rate");
+	declareOutput("Packets loss rate");
 
-	//cTopology *topo;	// temp variable to access packets received by other nodes
-	//topo = new cTopology("topo");// instancia um objeto da classe cTopology e envia como parametro a palavra topo
-	////extrai os modulos (nós) que iremos trabalhar
-	//topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());//Extracts model topology by the fully qualified NED type name of the modules. 
+	cTopology *topo;	// temp variable to access packets received by other nodes
+	topo = new cTopology("topo");// instancia um objeto da classe cTopology e envia como parametro a palavra topo
+	//extrai os modulos (nós) que iremos trabalhar
+	topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());//Extracts model topology by the fully qualified NED type name of the modules. 
 
-	//long bytesDelivered = 0;
-	//for (int i = 0; i < numNodes; i++) {
-		////tenta converter a variável topo (que é do tipo cTopology para uma variável do tipo Thermometer em tempo de execução)
-		//Thermometer *appModule = dynamic_cast<Thermometer*>
-			//(topo->getNode(i)->getModule()->getSubmodule("Application"));
-		//if (appModule) {
-			//int packetsSent = appModule->getPacketsSent(self);
-			//if (packetsSent > 0) { // this node sent us some packets
-				//float rate = (float)packetsReceived[i]/packetsSent;
-				//collectOutput("Packets reception rate", i, "total", rate);
-				//collectOutput("Packets loss rate", i, "total", 1-rate);
-			//}
+	long bytesDelivered = 0;
+	for (int i = 0; i < numNodes; i++) {
+		//tenta converter a variável topo (que é do tipo cTopology para uma variável do tipo Thermometer em tempo de execução)
+		Thermometer *appModule = dynamic_cast<Thermometer*>
+			(topo->getNode(i)->getModule()->getSubmodule("Application"));
+		if (appModule) {
+			int packetsSent = appModule->getPacketsSent(self);
+			if (packetsSent > 0) { // this node sent us some packets
+				float rate = (float)packetsReceived[i]/packetsSent;
+				collectOutput("Packets reception rate", i, "total", rate);
+				collectOutput("Packets loss rate", i, "total", 1-rate);
+			}
 
-			//bytesDelivered += appModule->getBytesReceived(self);
-		//}
-	//}
-	//delete(topo);
+			bytesDelivered += appModule->getBytesReceived(self);
+		}
+	}
+	delete(topo);
 
-	//if (packet_rate > 0 && bytesDelivered > 0) {
-		//double energy = (resMgrModule->getSpentEnergy() * 1000000000)/(bytesDelivered * 8);	//in nanojoules/bit
-		//declareOutput("Energy nJ/bit");
-		//collectOutput("Energy nJ/bit","",energy);
-	//}
-	//agent_request_association_release(CONTEXT_ID);
-	//agent_disconnect(CONTEXT_ID);
-	//agent_finalize(CONTEXT_ID);
+	if (packet_rate > 0 && bytesDelivered > 0) {
+		double energy = (resMgrModule->getSpentEnergy() * 1000000000)/(bytesDelivered * 8);	//in nanojoules/bit
+		declareOutput("Energy nJ/bit");
+		collectOutput("Energy nJ/bit","",energy);
+	}
 }
 
-MyPacket* Thermometer::createGenericDataPackett(unsigned int seqNum)
+MyPacket* Thermometer::createGenericDataPackett(int seqNum)
 {
 	MyPacket *pktt = new MyPacket("mypacket", APPLICATION_PACKET);
 	pktt->setExtraData(st_msg[my_plugin_number]);
 	pktt->setSequenceNumber(seqNum);
-	//Tmsg tmp = pktt->getExtraData();
-	//trace() << tmp.send_str;
-	//st_msg[my_plugin_number].tam_buff = 0;
-	//for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
-	//{
-	//st_msg[my_plugin_number].buff_msg[i] = '\0';
-	//}
 	return pktt;
 }
 

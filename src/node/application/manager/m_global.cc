@@ -32,7 +32,7 @@
 #include "VirtualApplication.h"
 #include "MyPacket_m.h"
 
-extern "C"{
+extern "C" {
 #include "ieee11073.h"
 #include "manager.h"
 }
@@ -40,7 +40,7 @@ extern "C"{
 Define_Module(Manager);
 
 /**
- * Port used by agent to send network data
+ * Plugin used by agent to send network data
  */
 ContextId m_CONTEXT_ID = {2, 0};
 
@@ -50,15 +50,21 @@ ContextId m_CONTEXT_ID = {2, 0};
 CommunicationPlugin m_comm_plugin = COMMUNICATION_PLUGIN_NULL;
 
 /**
- * TCP m_port to use
+ *  Variable used by the stack
  */
 unsigned long long m_port = 0;
 
+/**
+ * Callback function that is called whenever a device
+ * is unvailable.
+ *
+ * @param ctx current context.
+ * @param list the new list of elements.
+ */
 void m_device_unavailable(Context *ctx)
 {
 	fprintf(stderr, " main: Disasociated\n");
 }
-
 
 /**
  * Callback function that is called whenever a new data
@@ -85,7 +91,6 @@ void new_data_received(Context *ctx, DataList *list)
 	// manager_request_association_release(m_CONTEXT_ID);
 }
 
-
 /**
  * Callback function that is called whenever a new device
  * has been available
@@ -110,12 +115,19 @@ void device_associated(Context *ctx, DataList *list)
 	device_reqmdsattr();
 }
 
+/**
+ * Callback function that is called whenever a new device
+ * is connected to the Manager.
+ *
+ * @param ctx current context.
+ * @param list the new list of elements.
+ */
 void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
 	DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
 	char *data = json_encode_data_list(list);
 
-	fprintf(stderr, "print_device_attributes\n");
+	fprintf(stderr, "Print device attributes:\n");
 
 	if (data != NULL) {
 		fprintf(stderr, "%s", data);
@@ -138,7 +150,6 @@ void device_reqmdsattr()
 	manager_request_get_all_mds_attributes(m_CONTEXT_ID, print_device_attributes);
 }
 
-
 /**
  * Waits 0 milliseconds for timeout.
  *
@@ -158,15 +169,11 @@ void m_timer_reset_timeout(Context *ctx)
 {
 }
 
-
 /**
  * Configure application to use castalia plugin
  */
 void m_castalia_mode()
 {
-	//int m_port = 6024;
-	// NOTE we know that plugin id = 1 here, but
-	// might not be the case!
 	m_CONTEXT_ID.plugin = 2;
 	m_CONTEXT_ID.connid = m_port;
 	m_plugin_network_castalia_manager_setup(&m_comm_plugin, m_port);

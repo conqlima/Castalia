@@ -32,7 +32,7 @@
 #include "VirtualApplication.h"
 #include "MyPacket_m.h"
 
-extern "C"{
+extern "C" {
 #include <ieee11073.h>
 #include "agent.h"
 #include "sample_agent_common.h"
@@ -50,29 +50,56 @@ ContextId CONTEXT_ID = {1, 0};
  */
 CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
 
-int alarms = 4;
-
+/**
+ * Waits 0 milliseconds for timeout.
+ *
+ * @param ctx current context.
+ * @return fake timeout id
+ */
 int timer_count_timeout(Context *ctx)
 {
 	return 1;
 }
 
+/**
+ * Fake implementation of the reset timeout function.
+ * @param ctx current context.
+ */
 void timer_reset_timeout(Context *ctx)
 {
 }
 
+/**
+ * Callback function that is called whenever a 
+ * Divece is associated with a Manager.
+ * 
+ * @param ctx current context.
+ * @param list the new list of elements.
+ */
 void device_associated(Context *ctx)
 {
 	fprintf(stderr, " main: Associated\n");
-	//alarm(3);
 }
 
+/**
+ * Callback function that is called whenever a device
+ * is unvailable.
+ *
+ * @param ctx current context.
+ * @param list the new list of elements.
+ */
 void device_unavailable(Context *ctx)
 {
 	fprintf(stderr, " main: Disasociated\n");
-	alarms = 0;
 }
 
+/**
+ * Callback function that is called whenever a 
+ * Divece is initiated (connected).
+ * 
+ * @param ctx current context.
+ * @param list the new list of elements.
+ */
 void device_connected(Context *ctx, const char *addr)
 {
 	fprintf(stderr, "main: Connected\n");
@@ -80,25 +107,6 @@ void device_connected(Context *ctx, const char *addr)
 	// ok, make it proceed with association
 	// (agent has the initiative)
 	agent_associate(ctx->id);
-}
-
-void sigalrm(int dummy)
-{
-	// This is not incredibly safe, because signal may interrupt
-	// processing, and is not a technique for a production agent,
-	// but suffices for this quick 'n dirty sample
-	
-	if (alarms > 1) {
-		agent_send_data(CONTEXT_ID);
-		//alarm(3);
-	} else if (alarms == 1) {
-		agent_request_association_release(CONTEXT_ID);
-		//alarm(3);
-	} else {
-		agent_disconnect(CONTEXT_ID);
-	}
-
-	--alarms;
 }
 
 /**
@@ -113,5 +121,3 @@ void castalia_mode()
 	CONTEXT_ID.connid = port;
 	plugin_network_castalia_agent_setup(&comm_plugin, port);
 }
-
-

@@ -34,13 +34,13 @@ class Manager : public VirtualApplication {
 	double startupDelay;
 	double delayLimit;
 	float packet_spacing;
-	int dataSN;
+	int dataSN[11];
 	int recipientId;
 	string recipientAddress;
 	int last_packet[6];
-	int my_plugin_number;
+	unsigned int my_plugin_number;
+	string current_addr;
 
-	
 	//variables below are used to determine the packet delivery rates.	
 	unsigned int numNodes;
 	map<long,int> packetsReceived;
@@ -58,7 +58,7 @@ class Manager : public VirtualApplication {
 	int getPacketsSent(int addr) { return packetsSent[addr]; }
 	int getPacketsReceived(int addr) { return packetsReceived[addr]; }
 	int getBytesReceived(int addr) { return bytesReceived[addr]; }
-	MyPacket* createGenericDataPackett(unsigned int seqNum);
+	MyPacket* createGenericDataPackett(int seqNum);
 
 };
 

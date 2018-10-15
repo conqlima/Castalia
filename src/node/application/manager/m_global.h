@@ -1,15 +1,16 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 
-extern "C"{
+extern "C" {
 #include "communication/context.h"
 #include <time.h>
 #include "api/api_definitions.h"
 #include "communication/plugin/plugin.h"
 #include "communication/service.h"
 }
+
 /**
- * m_port used by agent to send network data
+ * plugin used by agent to send network data
  */
 extern ContextId m_CONTEXT_ID;
 
@@ -18,8 +19,14 @@ extern ContextId m_CONTEXT_ID;
  */
 extern CommunicationPlugin m_comm_plugin;
 
+/**
+ * Variable used by the stack
+ */
 extern unsigned long long m_port;
 
+/**
+ * Struct to represent the messages exchanged
+ */
 extern Tmsg m_st_msg[11];
 
 void m_timer_reset_timeout(Context *ctx);
