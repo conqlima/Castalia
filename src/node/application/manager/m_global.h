@@ -17,7 +17,7 @@ extern ContextId m_CONTEXT_ID;
 /**
  * PLugin definition
  */
-extern CommunicationPlugin m_comm_plugin;
+extern CommunicationPlugin m_comm_plugin[11];
 
 /**
  * Variable used by the stack
@@ -36,6 +36,6 @@ void m_device_unavailable(Context *ctx);
 void device_reqmdsattr();
 void new_data_received(Context *ctx, DataList *list);
 void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu);
-void m_castalia_mode();
+void m_castalia_mode(unsigned int my_plugin_number);
 
 #endif

@@ -22,21 +22,24 @@ void Manager::startup()
 
 	
 	/*codes from sample_manager.c*/
-	m_comm_plugin = communication_plugin();
-	m_castalia_mode();
+	//m_comm_plugin = communication_plugin();
+	//m_castalia_mode();
 	
 	fprintf(stderr, "\nIEEE 11073 Sample application\n");
 
-	m_comm_plugin.timer_count_timeout = m_timer_count_timeout;
-	m_comm_plugin.timer_reset_timeout = m_timer_reset_timeout;
+	//m_comm_plugin.timer_count_timeout = m_timer_count_timeout;
+	//m_comm_plugin.timer_reset_timeout = m_timer_reset_timeout;
 
-	CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin, 0};
+	//CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin, 0};
 	
 	/*obtem o número total de nós*/
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
 	
 	/*pego o número total de plugins que a aplicação vai ter*/
-	unsigned int numPlugin = (2*(numNodes-1));
+	numPlugin = (2*(numNodes-1));
+	
+	ManagerListener listener[11] = {MANAGER_LISTENER_EMPTY};
+
 	
 	/*Faz a inicialização de todos os plugins pares, isto é,
 	 * o agente somente utiliza plugins de numeros pares ini-
@@ -45,15 +48,27 @@ void Manager::startup()
 		
 		if ( (i % 2) == 0){
 			
+			m_comm_plugin[i] = communication_plugin();
+			m_castalia_mode(i);
+	
+			fprintf(stderr, "\nIEEE 11073 Sample application\n");
+
+			m_comm_plugin[i].timer_count_timeout = m_timer_count_timeout;
+			m_comm_plugin[i].timer_reset_timeout = m_timer_reset_timeout;
+
+			CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin[i], 0};
+
+			
+			
 			m_CONTEXT_ID = {i,0};
 			manager_init(m_CONTEXT_ID, m_comm_plugins);
 			
-			ManagerListener listener = MANAGER_LISTENER_EMPTY;
-			listener.measurement_data_updated = &new_data_received;
-			listener.device_available = &device_associated;
-			listener.device_unavailable = &m_device_unavailable;
+			//ManagerListener listener = MANAGER_LISTENER_EMPTY;
+			listener[i].measurement_data_updated = &new_data_received;
+			listener[i].device_available = &device_associated;
+			listener[i].device_unavailable = &m_device_unavailable;
 		
-			manager_add_listener(m_CONTEXT_ID, listener);
+			manager_add_listener(m_CONTEXT_ID, listener[i]);
 			
 			manager_start(m_CONTEXT_ID);
 		}
@@ -85,11 +100,13 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	//número do nó no formato string
 	recipientAddress = source;
 	
-	//número do plugin corrente
-	my_plugin_number = sourceId*2;
-	
 	if (sequenceNumber != last_packet[sourceId]) {
-	
+		reSend[sourceId] = 0;
+		
+		//número do plugin corrente
+		my_plugin_number = sourceId*2;
+		
+		//cancelTimer(SEND_PACKET);
 		/*Verifica se é um pacote duplicado*/
 		last_packet[sourceId] = sequenceNumber;
 		
@@ -125,10 +142,18 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 						communication_read_input_stream(m_ctx->id);
 					
 					context_unlock(m_ctx);
-					dataSN[my_plugin_number]++;
+					//my_plugin_number = sourceId*2;
+					dataSN[sourceId*2]++;
 					
+					reSend[sourceId] = 1;
+					//i = 1;
+					for(int i = 1; i <= 5; i++){
+					if (reSend[i]){
+						leftToSend[i] = leftToSend[i] + 5;
+						//setTimer(SEND_PACKET, packet_spacing);
+						}
+					}
 					setTimer(SEND_PACKET, packet_spacing);
-				
 				}
 			}else {
 				trace() << "Packet #" << sequenceNumber << " from node " << source <<
@@ -145,12 +170,36 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 
 void Manager::timerFiredCallback(int index)
 {
+	//int i;
 	switch (index) {
+		case SEND_AUX:{
+				for(int i = 1; i <= 5; i++){
+						if (leftToSend[i] == 1){
+						my_plugin_number = i*2;
+						const char* c = std::to_string(i).c_str();
+						toNetworkLayer(createGenericDataPackett(dataSN[my_plugin_number]), c);
+						packetsSent[recipientId]++;
+						//break;
+						}
+				}
+		}
+		
 		case SEND_PACKET:{
 				//trace() << "Sending packet #" << dataSN[my_plugin_number];
-				toNetworkLayer(createGenericDataPackett(dataSN[my_plugin_number]), recipientAddress.c_str());
-				packetsSent[recipientId]++;
-				setTimer(SEND_PACKET, packet_spacing);
+				for(int i = 1; i <= 5; i++){
+					//if (leftToSend[i] > 0){
+						//my_plugin_number = i*2;
+					while(leftToSend[i] > 1){
+						//my_plugin_number = i*2;
+						//const char* c = std::to_string(i).c_str();
+						//toNetworkLayer(createGenericDataPackett(dataSN[my_plugin_number]), c);
+						setTimer(SEND_AUX, packet_spacing);
+						//packetsSent[recipientId]++;
+						leftToSend[i]--;
+					}
+					//}
+				//setTimer(SEND_PACKET, packet_spacing);
+				}
 			break;
 		}
 	}
@@ -179,7 +228,7 @@ void Manager::finishSpecific() {
 	topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());//Extracts model topology by the fully qualified NED type name of the modules. 
 
 	long bytesDelivered = 0;
-	for (int i = 0; i < numNodes; i++) {
+	for (unsigned int i = 0; i < numNodes; i++) {
 		//tenta converter a variável topo (que é do tipo cTopology para uma variável do tipo Manager em tempo de execução)
 		Manager *appModule = dynamic_cast<Manager*>
 			(topo->getNode(i)->getModule()->getSubmodule("Application"));

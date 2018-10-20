@@ -286,7 +286,8 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 		m_st_msg[ctx->id.plugin].tam_buff += stream->size;
 		
 		/*limpa o restanto do pacote*/
-		for (int i = m_st_msg[ctx->id.plugin].tam_buff; i < 65535; i++) {
+		//for (int i = m_st_msg[ctx->id.plugin].tam_buff; i < 65535; i++) {
+		for (int i = m_st_msg[ctx->id.plugin].tam_buff; i < 300; i++) {
 			m_st_msg[ctx->id.plugin].buff_msg[i] = '\0';
 		}
 	

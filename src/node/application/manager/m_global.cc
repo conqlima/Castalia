@@ -47,7 +47,7 @@ ContextId m_CONTEXT_ID = {2, 0};
 /**
  * PLugin definition
  */
-CommunicationPlugin m_comm_plugin = COMMUNICATION_PLUGIN_NULL;
+CommunicationPlugin m_comm_plugin[11] = {COMMUNICATION_PLUGIN_NULL};
 
 /**
  *  Variable used by the stack
@@ -172,11 +172,11 @@ void m_timer_reset_timeout(Context *ctx)
 /**
  * Configure application to use castalia plugin
  */
-void m_castalia_mode()
+void m_castalia_mode(unsigned int my_plugin_number)
 {
 	m_CONTEXT_ID.plugin = 2;
 	m_CONTEXT_ID.connid = m_port;
-	m_plugin_network_castalia_manager_setup(&m_comm_plugin, m_port);
+	m_plugin_network_castalia_manager_setup(&m_comm_plugin[my_plugin_number], m_port);
 }
 
 

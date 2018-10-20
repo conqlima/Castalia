@@ -1,2 +1,2 @@
-EXTRA_OBJS = src/node/application/thermometer/sample_agent_common.o
+#EXTRA_OBJS = src/node/application/agent/sample_agent_common.o
 

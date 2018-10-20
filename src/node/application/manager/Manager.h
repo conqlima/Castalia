@@ -24,7 +24,8 @@ extern "C" {
 using namespace std;
 
 enum ManagerTimers {
-	SEND_PACKET = 1
+	SEND_PACKET = 1,
+	SEND_AUX = 2
 };
 
 class Manager : public VirtualApplication {
@@ -39,7 +40,10 @@ class Manager : public VirtualApplication {
 	string recipientAddress;
 	int last_packet[6];
 	unsigned int my_plugin_number;
-	string current_addr;
+	unsigned int numPlugin;
+	int leftToSend[6];
+	int reSend[6];
+	//int i = 1;
 
 	//variables below are used to determine the packet delivery rates.	
 	unsigned int numNodes;
