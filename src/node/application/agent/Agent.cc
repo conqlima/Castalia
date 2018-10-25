@@ -2,7 +2,9 @@
 
 Define_Module(Agent);
 
-Tmsg st_msg[11];
+//const int tam = getNumberOfNodes();
+
+Tmsg* st_msg = NULL;
 
 void Agent::startup()
 {
@@ -18,7 +20,7 @@ void Agent::startup()
 	//int time_in_sec = simTime().inUnit(SIMTIME_S);
 	//alarmt = (int) alarmt*time_in_sec;
 	j = 0;
-	
+	RC = 3;
 	time_limit = par("time_limit").stringValue();
 	simtime_t t = STR_SIMTIME(time_limit.c_str());
 	total_sec = t.inUnit(SIMTIME_S);
@@ -26,6 +28,10 @@ void Agent::startup()
 	data_spacing = reading_rate > 0 ? 1.0 / reading_rate : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 	
 	last_packet = -1;
+	
+	numNodes = getParentModule()->getParentModule()->par("numNodes");
+	if (st_msg == NULL)
+	st_msg = new Tmsg[numNodes];
 	
 	/*codes from sample_agent.c*/
 	//unsigned int opt;
@@ -96,13 +102,10 @@ void Agent::startup()
 
 	agent_add_listener(CONTEXT_ID, listener);
 	
+
 	agent_start(CONTEXT_ID);
 	dataSN++;
-	
-
-	setTimer(SEND_DATA, packet_spacing + startupDelay);// define o timer para começar enviar pacotes
-
-	numNodes = getParentModule()->getParentModule()->par("numNodes");
+	setTimer(SEND_PACKET, 0 + startupDelay);// define o timer para começar enviar pacotes
 	
 	/*Variáveis utilizadas na função FinishEspefic()*/
 	packetsSent.clear(); //zera as posições do map
@@ -126,13 +129,33 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 
 	if (sequenceNumber != last_packet) {
 		
+		Context *ctx;
+		CONTEXT_ID = {my_plugin_number, 0};
+		ctx = context_get_and_lock(CONTEXT_ID);
+		fsm_states c = ctx->fsm->state;
+		switch(c) {
+				case fsm_state_associating:{
+					if (getTimer(TO_ASSOC) != 0)
+					cancelTimer(TO_ASSOC);
+					break;
+				}
+				
+				case fsm_state_operating:{
+					if (getTimer(TO_OPERA) != 0)
+					cancelTimer(TO_OPERA);
+					break;
+				}
+				default: break;
+		}
+		context_unlock(ctx);
+		
 		/*Limpa a variável st_msg antes de fazer qualquer coisa*/
-		for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
+		for (int i = 0; i < st_msg[nodeNumber].tam_buff; i++)
 		{
-			st_msg[my_plugin_number].buff_msg[i] = '\0';
+			st_msg[nodeNumber].buff_msg[i] = '\0';
 		}
 	
-		st_msg[my_plugin_number].tam_buff = 0;
+		st_msg[nodeNumber].tam_buff = 0;
 		
 		//cancelTimer(SEND_DATA);
 		/*Verifica se é um pacote duplicado*/
@@ -140,12 +163,12 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		
 		/*Recebe o pacote numa estrutura temporária*/
 		Tmsg tmp = rcvPacket->getExtraData();
-		st_msg[my_plugin_number].tam_buff = tmp.tam_buff;
+		st_msg[nodeNumber].tam_buff = tmp.tam_buff;
 		
 		/*Copia informação do pacote recebido para m_st_msg*/
-		for (int i = 0; i < st_msg[my_plugin_number].tam_buff; i++)
+		for (int i = 0; i < st_msg[nodeNumber].tam_buff; i++)
 		{
-			st_msg[my_plugin_number].buff_msg[i] = tmp.buff_msg[i];
+			st_msg[nodeNumber].buff_msg[i] = tmp.buff_msg[i];
 		}
 		
 		if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
@@ -158,32 +181,35 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 				packetsReceived[sourceId]++;
 				bytesReceived[sourceId] += rcvPacket->getByteLength();
 
-				Context *ctx;
+				//Context *ctx;
 				CONTEXT_ID = {my_plugin_number, 0};
 				ctx = context_get_and_lock(CONTEXT_ID);
 				
 				/*verifica se no pacote recebido existe dados*/
-				if (st_msg[my_plugin_number].tam_buff > 0) {
+				if (st_msg[nodeNumber].tam_buff > 0) {
 					/*ler todos os dados do buffer*/
 					while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
 						communication_read_input_stream(ctx->id);
 				}
 				
 				/*Verifica se o agente já pode enviar leituras*/
-				if (ctx->fsm->state == fsm_state_operating && alarmt > 1) {
+				if (ctx->fsm->state == fsm_state_operating && alarmt > 0) {
 					agent_send_data(CONTEXT_ID);
-					--alarmt;
+
 					dataSN++;
 					j = 0;
-					setTimer(SEND_DATA, packet_spacing+0.5);
-					//setTimer(SEND_PACKET, packet_spacing);
-				}else if (alarmt == 1) {
+					if (alarmt == (int)((total_sec*reading_rate)))
+					setTimer(SEND_PACKET, 0);
+					else
+					setTimer(SEND_PACKET, data_spacing);
+					--alarmt;
+				}else if (alarmt == 0) {
 						agent_request_association_release(CONTEXT_ID);
 						--alarmt;
 						dataSN++;
 						j = 0;
-						setTimer(SEND_DATA, packet_spacing);
-				}else if (alarmt == 0) {
+						setTimer(SEND_PACKET, 0);
+				}else if (alarmt == -1) {
 						agent_disconnect(CONTEXT_ID);
 						--alarmt;
 				}
@@ -205,33 +231,85 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	}
 }
 
+//void Agent::timerFiredCallback(int index)
+//{
+	//switch (index) {
+		//case SEND_PACKET:{
+			////trace() << "Sending packet #" << dataSN;//sequence number
+			//toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
+			//packetsSent[recipientId]++;
+			//setTimer(SEND_DATA, 0);
+			//break;
+		//}
+		
+		//case SEND_DATA:{
+			////trace() << "Sending packet #" << dataSN;//sequence number
+			////toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
+			////packetsSent[recipientId]++;
+			
+			////for(; j < 6; j++){
+				//if (j < 4){
+				//setTimer(SEND_PACKET, packet_spacing);
+				//j++;
+				//}
+			////}
+			
+			//break;
+		//}
+	//}
+
+//}
+
+
 void Agent::timerFiredCallback(int index)
 {
+	Context *ctx;
+	CONTEXT_ID = {my_plugin_number, 0};
+	ctx = context_get_and_lock(CONTEXT_ID);
+	
 	switch (index) {
 		case SEND_PACKET:{
-			//trace() << "Sending packet #" << dataSN;//sequence number
+			trace() << "Sending packet #" << dataSN;//sequence number
 			toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
 			packetsSent[recipientId]++;
-			setTimer(SEND_DATA, 0);
+			fsm_states c = ctx->fsm->state;
+			switch(c) {
+				case fsm_state_associating:{
+					if (RC)
+					setTimer(TO_ASSOC, 10);
+					break;
+				}
+				case fsm_state_operating: {
+					//setTimer(SEND_PACKET, data_spacing-1);
+					setTimer(TO_OPERA, 3);
+					break;
+				}
+				default: break;
+			}
+
 			break;
 		}
 		
-		case SEND_DATA:{
-			//trace() << "Sending packet #" << dataSN;//sequence number
-			//toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
-			//packetsSent[recipientId]++;
-			
-			//for(; j < 6; j++){
-				if (j < 4){
-				setTimer(SEND_PACKET, packet_spacing);
-				j++;
-				}
-			//}
-			
+		case TO_ASSOC:{
+			if (RC == 0)
+				agent_request_association_abort(CONTEXT_ID);
+			else {
+				trace() << "resending packet #" << dataSN;//sequence number
+				toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
+				packetsSent[recipientId]++;
+				setTimer(TO_ASSOC, 10);
+				RC--;
+			}
+			break;
+		}
+		
+		case TO_OPERA:{
+				trace() << "response not received for packet #" << dataSN << " aborting...";//sequence number
+				agent_request_association_abort(CONTEXT_ID);
 			break;
 		}
 	}
-
+	context_unlock(ctx);
 }
 
 // This method processes a received carrier sense interupt. Used only for demo purposes
@@ -277,13 +355,19 @@ void Agent::finishSpecific() {
 		declareOutput("Energy nJ/bit");
 		collectOutput("Energy nJ/bit","",energy);
 	}
+	if (st_msg != NULL) {
+	delete[] st_msg;
+	st_msg = NULL;
+	}
 }
 
 MyPacket* Agent::createGenericDataPackett(int seqNum)
 {
 	MyPacket *pktt = new MyPacket("mypacket", APPLICATION_PACKET);
-	pktt->setExtraData(st_msg[my_plugin_number]);
+	pktt->setExtraData(st_msg[nodeNumber]);
 	pktt->setSequenceNumber(seqNum);
 	return pktt;
 }
+
+
 

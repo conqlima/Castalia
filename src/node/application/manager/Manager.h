@@ -25,7 +25,8 @@ using namespace std;
 
 enum ManagerTimers {
 	SEND_PACKET = 1,
-	SEND_AUX = 2
+	TO_ASSOC,
+	TO_OPERA
 };
 
 class Manager : public VirtualApplication {
@@ -35,21 +36,30 @@ class Manager : public VirtualApplication {
 	double startupDelay;
 	double delayLimit;
 	float packet_spacing;
-	int dataSN[11];
+	//int dataSN[6];
+	//int* dataSN = nullptr;
 	int recipientId;
 	string recipientAddress;
-	int last_packet[6];
+	//int last_packet[6];
+	//int* last_packet = nullptr;
 	unsigned int my_plugin_number;
 	unsigned int numPlugin;
 	int leftToSend[6];
+	//int* leftToSend = nullptr;
 	int reSend[6];
-	//int i = 1;
+	//int* reSend = nullptr;
+	unsigned int numNodes;
+	unsigned int i = 1;
+
 
 	//variables below are used to determine the packet delivery rates.	
-	unsigned int numNodes;
 	map<long,int> packetsReceived;
 	map<long,int> bytesReceived;
 	map<long,int> packetsSent;
+	map<long,int> dataSN;
+	map<long,int> last_packet;
+	map<long,int> RC;
+
 
  protected:
 	void startup();

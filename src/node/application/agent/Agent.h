@@ -27,7 +27,8 @@ using namespace std;
 
 enum AgentTimers {
 	SEND_PACKET = 1,
-	SEND_DATA = 2
+	TO_ASSOC,
+	TO_OPERA
 };
 
 class Agent : public VirtualApplication {
@@ -53,6 +54,7 @@ class Agent : public VirtualApplication {
 	double reading_rate;
 	float data_spacing;
 	int j;
+	int RC;
 	
 	//variables below are used to determine the packet delivery rates.	
 	int numNodes;
@@ -71,6 +73,7 @@ class Agent : public VirtualApplication {
 	int getPacketsSent(int addr) { return packetsSent[addr]; }
 	int getPacketsReceived(int addr) { return packetsReceived[addr]; }
 	int getBytesReceived(int addr) { return bytesReceived[addr]; }
+	int getNumberOfNodes() { return getParentModule()->getParentModule()->par("numNodes");}
 	MyPacket* createGenericDataPackett(int seqNum);
 
 };

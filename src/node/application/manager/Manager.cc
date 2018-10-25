@@ -2,7 +2,8 @@
 
 Define_Module(Manager);
 
-Tmsg m_st_msg[11];
+Tmsg* m_st_msg = NULL;
+CommunicationPlugin* m_comm_plugin;
 
 void Manager::startup()
 {
@@ -12,15 +13,19 @@ void Manager::startup()
 	startupDelay = par("startupDelay");
 	delayLimit = par("delayLimit");
 	packet_spacing = packet_rate > 0 ? 1 / float (packet_rate) : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
+	numNodes = getParentModule()->getParentModule()->par("numNodes");
 
-	last_packet[0] = -1;
-	last_packet[1] = -1;
-	last_packet[2] = -1;
-	last_packet[3] = -1;
-	last_packet[4] = -1;
-	last_packet[5] = -1;
+	//dataSN = new int[numNodes];
+	//last_packet = new int[numNodes];
+	//leftToSend = new int[numNodes];
+	//reSend = new int[numNodes];
 
-	
+	leftToSend[0] = reSend[0] = 0;
+	leftToSend[1] = reSend[1] = 0;
+	leftToSend[2] = reSend[2] = 0;
+	leftToSend[3] = reSend[3] = 0;
+	leftToSend[4] = reSend[4] = 0;
+	leftToSend[5] = reSend[5] = 0;
 	/*codes from sample_manager.c*/
 	//m_comm_plugin = communication_plugin();
 	//m_castalia_mode();
@@ -33,42 +38,49 @@ void Manager::startup()
 	//CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin, 0};
 	
 	/*obtem o número total de nós*/
-	numNodes = getParentModule()->getParentModule()->par("numNodes");
+	if (m_st_msg == NULL)
+	m_st_msg = new Tmsg[numNodes];
 	
+	m_comm_plugin = new CommunicationPlugin[numNodes];
+	 m_comm_plugin[0] = COMMUNICATION_PLUGIN_NULL;
+	 m_comm_plugin[1] = COMMUNICATION_PLUGIN_NULL;
+	 m_comm_plugin[2] = COMMUNICATION_PLUGIN_NULL;
+	 m_comm_plugin[3] = COMMUNICATION_PLUGIN_NULL;
+	 m_comm_plugin[4] = COMMUNICATION_PLUGIN_NULL;
+	 m_comm_plugin[5] = COMMUNICATION_PLUGIN_NULL;
+
 	/*pego o número total de plugins que a aplicação vai ter*/
 	numPlugin = (2*(numNodes-1));
 	
-	ManagerListener listener[11] = {MANAGER_LISTENER_EMPTY};
+	ManagerListener listener[6] = {MANAGER_LISTENER_EMPTY};
 
-	
 	/*Faz a inicialização de todos os plugins pares, isto é,
 	 * o agente somente utiliza plugins de numeros pares ini-
 	 * ciando no número 2.*/
-	for (unsigned int i = 1; i <= numPlugin; i++){
+	for (unsigned int i = 2; i <= numPlugin; i += 2){
 		
 		if ( (i % 2) == 0){
-			
-			m_comm_plugin[i] = communication_plugin();
+			//pego o número do nó baseado no número do plugin
+			unsigned int nodeId = i/2;
+			m_comm_plugin[nodeId] = communication_plugin();
 			m_castalia_mode(i);
 	
 			fprintf(stderr, "\nIEEE 11073 Sample application\n");
 
-			m_comm_plugin[i].timer_count_timeout = m_timer_count_timeout;
-			m_comm_plugin[i].timer_reset_timeout = m_timer_reset_timeout;
+			m_comm_plugin[nodeId].timer_count_timeout = m_timer_count_timeout;
+			m_comm_plugin[nodeId].timer_reset_timeout = m_timer_reset_timeout;
 
-			CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin[i], 0};
+			CommunicationPlugin *m_comm_plugins[] = {&m_comm_plugin[nodeId], 0};
 
-			
-			
 			m_CONTEXT_ID = {i,0};
 			manager_init(m_CONTEXT_ID, m_comm_plugins);
 			
 			//ManagerListener listener = MANAGER_LISTENER_EMPTY;
-			listener[i].measurement_data_updated = &new_data_received;
-			listener[i].device_available = &device_associated;
-			listener[i].device_unavailable = &m_device_unavailable;
+			listener[nodeId].measurement_data_updated = &new_data_received;
+			listener[nodeId].device_available = &device_associated;
+			listener[nodeId].device_unavailable = &m_device_unavailable;
 		
-			manager_add_listener(m_CONTEXT_ID, listener[i]);
+			manager_add_listener(m_CONTEXT_ID, listener[nodeId]);
 			
 			manager_start(m_CONTEXT_ID);
 		}
@@ -78,7 +90,14 @@ void Manager::startup()
 	packetsSent.clear();
 	packetsReceived.clear();
 	bytesReceived.clear();
-	
+	dataSN.clear();
+	last_packet.clear();
+	RC[0] = 3;
+	RC[1] = 3;
+	RC[2] = 3;
+	RC[3] = 3;
+	RC[4] = 3;
+	RC[5] = 3;
 	declareOutput("Packets received per node");
 }
 
@@ -103,8 +122,27 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	if (sequenceNumber != last_packet[sourceId]) {
 		reSend[sourceId] = 0;
 		
-		//número do plugin corrente
+		Context *ctx;
 		my_plugin_number = sourceId*2;
+		m_CONTEXT_ID = {my_plugin_number, 0};
+		ctx = context_get_and_lock(m_CONTEXT_ID);
+		fsm_states c = ctx->fsm->state;
+		switch(c) {
+				case fsm_state_associating:{
+					if (getTimer(TO_ASSOC) != 0)
+					cancelTimer(TO_ASSOC);
+					break;
+				}
+				case fsm_state_operating:{
+					if (getTimer(TO_OPERA) != 0)
+					cancelTimer(TO_OPERA);
+					break;
+				}
+				default: break;
+		}
+		context_unlock(ctx);
+		//número do plugin corrente
+		//my_plugin_number = sourceId*2;
 		
 		//cancelTimer(SEND_PACKET);
 		/*Verifica se é um pacote duplicado*/
@@ -112,12 +150,12 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		
 		/*Recebe o pacote numa estrutura temporária*/
 		Tmsg tmp = rcvPacket->getExtraData();
-		m_st_msg[my_plugin_number].tam_buff = tmp.tam_buff;
+		m_st_msg[sourceId].tam_buff = tmp.tam_buff;
 		
 		/*Copia informação do pacote recebido para m_st_msg*/
-		for (int i = 0; i < m_st_msg[my_plugin_number].tam_buff; i++)
+		for (int i = 0; i < m_st_msg[sourceId].tam_buff; i++)
 		{
-			m_st_msg[my_plugin_number].buff_msg[i] = tmp.buff_msg[i];
+			m_st_msg[sourceId].buff_msg[i] = tmp.buff_msg[i];
 		}
 		
 		if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
@@ -131,7 +169,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 				bytesReceived[sourceId] += rcvPacket->getByteLength();
 				
 				/*verifica se no pacote recebido existe dados*/
-				if (m_st_msg[my_plugin_number].tam_buff > 0) {
+				if (m_st_msg[sourceId].tam_buff > 0) {
 				
 					m_CONTEXT_ID = {my_plugin_number, 0};
 					Context *m_ctx;
@@ -143,17 +181,19 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					
 					context_unlock(m_ctx);
 					//my_plugin_number = sourceId*2;
-					dataSN[sourceId*2]++;
+					dataSN[sourceId]++;
 					
 					reSend[sourceId] = 1;
 					//i = 1;
-					for(int i = 1; i <= 5; i++){
-					if (reSend[i]){
-						leftToSend[i] = leftToSend[i] + 5;
-						//setTimer(SEND_PACKET, packet_spacing);
-						}
-					}
-					setTimer(SEND_PACKET, packet_spacing);
+					//for(unsigned int i = 1; i < numNodes; i++){
+					//if (reSend[i]){
+						//leftToSend[i] = 1;
+						////setTimer(SEND_PACKET, packet_spacing);
+						//}
+					//}
+					//if (i == 6)
+					//i = 1;
+					setTimer(SEND_PACKET, 0);
 				}
 			}else {
 				trace() << "Packet #" << sequenceNumber << " from node " << source <<
@@ -170,41 +210,111 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 
 void Manager::timerFiredCallback(int index)
 {
-	//int i;
+	Context *ctx;
+	for (unsigned int i = 1; i < numNodes; i++) {
+	if (reSend[i]) {
+	my_plugin_number = i*2;
+	m_CONTEXT_ID = {my_plugin_number, 0};
+	ctx = context_get_and_lock(m_CONTEXT_ID);
+	
 	switch (index) {
-		case SEND_AUX:{
-				for(int i = 1; i <= 5; i++){
-						if (leftToSend[i] == 1){
-						my_plugin_number = i*2;
-						const char* c = std::to_string(i).c_str();
-						toNetworkLayer(createGenericDataPackett(dataSN[my_plugin_number]), c);
-						packetsSent[recipientId]++;
-						//break;
-						}
+		case SEND_PACKET:{
+			trace() << "Sending packet #" << dataSN[i];//sequence number
+			const char* recipient = std::to_string(i).c_str();
+			toNetworkLayer(createGenericDataPackett(dataSN[i]), recipient);
+			reSend[i] = 0;
+			packetsSent[recipientId]++;
+			fsm_states c = ctx->fsm->state;
+			switch(c) {
+				case fsm_state_associating:{
+					if (RC[i])
+					setTimer(TO_ASSOC, 10);
+					break;
 				}
+				case fsm_state_operating:{
+					setTimer(TO_OPERA, 3);
+					break;
+				}
+				default: break;
+			}
+
+			break;
 		}
 		
-		case SEND_PACKET:{
-				//trace() << "Sending packet #" << dataSN[my_plugin_number];
-				for(int i = 1; i <= 5; i++){
-					//if (leftToSend[i] > 0){
-						//my_plugin_number = i*2;
-					while(leftToSend[i] > 1){
-						//my_plugin_number = i*2;
-						//const char* c = std::to_string(i).c_str();
-						//toNetworkLayer(createGenericDataPackett(dataSN[my_plugin_number]), c);
-						setTimer(SEND_AUX, packet_spacing);
-						//packetsSent[recipientId]++;
-						leftToSend[i]--;
-					}
-					//}
-				//setTimer(SEND_PACKET, packet_spacing);
-				}
+		case TO_ASSOC:{
+			if (RC[i] == 0)
+				manager_request_association_abort(m_CONTEXT_ID);
+			else {
+				trace() << "resending packet #" << dataSN[i];//sequence number
+				const char* recipient = std::to_string(i).c_str();
+				toNetworkLayer(createGenericDataPackett(dataSN[i]), recipient);
+				packetsSent[recipientId]++;
+				setTimer(TO_ASSOC, 10);
+				RC[i]--;
+			}
+			break;
+		}
+		
+		case TO_OPERA:{
+				manager_request_association_abort(m_CONTEXT_ID);
 			break;
 		}
 	}
+	context_unlock(ctx);
+}
+}
 
 }
+
+//void Manager::timerFiredCallback(int index)
+//{
+	////static int i = 0;
+	//switch (index) {
+		//case SEND_AUX:{
+				///*Como em toda a aplicação, este laço considera que
+				//*o nó "hub" ou "sink" sempre será o nó com o endereço zero*/
+				//for(unsigned int i = 1; i < numNodes; i++){
+						//if (leftToSend[i] == 1){
+						//my_plugin_number = i;
+						//const char* c = std::to_string(i).c_str();
+						////toNetworkLayer(createGenericDataPackett(dataSN[i]), c);
+						//packetsSent[recipientId]++;
+						////setTimer(SEND_PACKET, 0);
+						////break;
+						//}
+				//}
+		//break;
+		//}
+		
+		//case SEND_PACKET:{
+				////trace() << "Sending packet #" << dataSN[my_plugin_number];
+				///*Como em toda a aplicação, este laço considera que
+				//*o nó "hub" ou "sink" sempre será o nó com o endereço zero*/
+				//for(unsigned int i = 1; i < numNodes; i++){
+					////if (leftToSend[i] > 0){
+						////my_plugin_number = i*2;
+					//while(leftToSend[i] > 1){
+						////my_plugin_number = i*2;
+						////const char* c = std::to_string(i).c_str();
+						////toNetworkLayer(createGenericDataPackett(dataSN[my_plugin_number]), c);
+						////if ( i != 6 && leftToSend[i] > 1){
+						////usleep(2);
+						//setTimer(SEND_AUX, packet_spacing);
+						//leftToSend[i]--;
+						////}else if (i < 6) {
+						////i++;
+						////setTimer(SEND_PACKET, packet_spacing);
+						////}
+						
+					//}
+					////}
+				////setTimer(SEND_PACKET, packet_spacing);
+				//}
+			//break;
+		//}
+	//}
+
+//}
 
 
 // This method processes a received carrier sense interupt. Used only for demo purposes
@@ -251,13 +361,14 @@ void Manager::finishSpecific() {
 		collectOutput("Energy nJ/bit","",energy);
 	}
 	manager_finalize(m_CONTEXT_ID);
+	if (m_st_msg != NULL)
+	delete[] m_st_msg;
 }
 
 MyPacket* Manager::createGenericDataPackett(int seqNum)
 {
 	MyPacket *pktt = new MyPacket("mypacket", APPLICATION_PACKET);
-	pktt->setExtraData(m_st_msg[my_plugin_number]);
+	pktt->setExtraData(m_st_msg[my_plugin_number/2]);
 	pktt->setSequenceNumber(seqNum);
 	return pktt;
 }
-

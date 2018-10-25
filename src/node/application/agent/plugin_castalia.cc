@@ -148,7 +148,7 @@ static int network_castalia_wait_for_data(Context *ctx)
 static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 {
 	ContextId cid = {plugin_id, port};
-
+	unsigned int nodeId = (ctx->id.plugin+1) / 2;
 	if (sk < 0) {
 		ERROR("network CASTALIA: network_get_apdu_stream cannot found a valid sokcet");
 		communication_transport_disconnect_indication(cid, "castalia");
@@ -163,13 +163,13 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		intu8 localbuf[65535];
 		
 		/*Transfere dados de st_msg para localbuf*/
-		for (i = 0; i < st_msg[ctx->id.plugin].tam_buff; i++)
+		for (i = 0; i < st_msg[nodeId].tam_buff; i++)
 		{
-			localbuf[i] = st_msg[ctx->id.plugin].buff_msg[i];
+			localbuf[i] = st_msg[nodeId].buff_msg[i];
 		}
 		
-		int bytes_read = st_msg[ctx->id.plugin].tam_buff;
-		st_msg[ctx->id.plugin].tam_buff = 0;
+		int bytes_read = st_msg[nodeId].tam_buff;
+		st_msg[nodeId].tam_buff = 0;
 
 		if (bytes_read < 0) {
 			free(buffer);
@@ -243,7 +243,8 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 {
 	unsigned int written = 0;
-
+	//pego o número do nó baseado no número do plugin
+	unsigned int nodeId = (ctx->id.plugin + 1)/2;
 	while (written < stream->size) {
 		int to_send = stream->size - written;
 #ifdef TEST_FRAGMENTATION
@@ -266,18 +267,18 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 		
 		/*Copia conteúdo de stream->buffer para m_st_msg*/
 		for (i = 0; i < stream->size; i++) {
-			st_msg[ctx->id.plugin].buff_msg[i+st_msg[ctx->id.plugin].tam_buff] = stream->buffer[i];
+			st_msg[nodeId].buff_msg[i+st_msg[nodeId].tam_buff] = stream->buffer[i];
 			//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 		}
 		
 		/*Caso o pacote tenha duas mensagens, o tamanho do pacote
 		 * deve ser o tamanho da msg1 + msg2 + ...*/
-		st_msg[ctx->id.plugin].tam_buff += stream->size;
+		st_msg[nodeId].tam_buff += stream->size;
 		
 		/*limpa o restanto do pacote*/
 		//for (int i = st_msg[ctx->id.plugin].tam_buff; i < 65535; i++) {
-		for (int i = st_msg[ctx->id.plugin].tam_buff; i < 300; i++) {
-			st_msg[ctx->id.plugin].buff_msg[i] = '\0';
+		for (int i = st_msg[nodeId].tam_buff; i < 65535; i++) {
+			st_msg[nodeId].buff_msg[i] = '\0';
 		}
 
 	}

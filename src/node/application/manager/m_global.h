@@ -17,7 +17,7 @@ extern ContextId m_CONTEXT_ID;
 /**
  * PLugin definition
  */
-extern CommunicationPlugin m_comm_plugin[11];
+extern CommunicationPlugin* m_comm_plugin;
 
 /**
  * Variable used by the stack
@@ -27,7 +27,7 @@ extern unsigned long long m_port;
 /**
  * Struct to represent the messages exchanged
  */
-extern Tmsg m_st_msg[11];
+extern Tmsg* m_st_msg;
 
 void m_timer_reset_timeout(Context *ctx);
 int m_timer_count_timeout(Context *ctx);
