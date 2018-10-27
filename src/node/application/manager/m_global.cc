@@ -55,6 +55,7 @@ ContextId m_CONTEXT_ID = {2, 0};
  */
 unsigned long long m_port = 0;
 
+
 /**
  * Callback function that is called whenever a device
  * is unvailable.
@@ -159,6 +160,7 @@ void device_reqmdsattr()
  */
 int m_timer_count_timeout(Context *ctx)
 {
+	m_SETTIMER = 1;
 	return 1;
 }
 

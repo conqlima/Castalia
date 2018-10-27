@@ -4,6 +4,7 @@ Define_Module(Manager);
 
 Tmsg* m_st_msg = NULL;
 CommunicationPlugin* m_comm_plugin;
+int m_SETTIMER = 0;
 
 void Manager::startup()
 {
@@ -14,7 +15,7 @@ void Manager::startup()
 	delayLimit = par("delayLimit");
 	packet_spacing = packet_rate > 0 ? 1 / float (packet_rate) : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
-
+	m_SETTIMER = 0;
 	//dataSN = new int[numNodes];
 	//last_packet = new int[numNodes];
 	//leftToSend = new int[numNodes];
@@ -114,28 +115,25 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	/*Pega o número do nó que recebemos o pacote e converte
 	 * para inteiro*/
 	unsigned int sourceId = atoi(source);//numero do nó não é o mesmo que endereço do nó
-	recipientId = sourceId;
-	
+
 	//número do nó no formato string
 	recipientAddress = source;
 	
 	if (sequenceNumber != last_packet[sourceId]) {
 		reSend[sourceId] = 0;
-		
+		recipientId = sourceId;
 		Context *ctx;
 		my_plugin_number = sourceId*2;
 		m_CONTEXT_ID = {my_plugin_number, 0};
 		ctx = context_get_and_lock(m_CONTEXT_ID);
 		fsm_states c = ctx->fsm->state;
 		switch(c) {
-				case fsm_state_associating:{
-					if (getTimer(TO_ASSOC) != 0)
-					cancelTimer(TO_ASSOC);
-					break;
-				}
 				case fsm_state_operating:{
-					if (getTimer(TO_OPERA) != 0)
-					cancelTimer(TO_OPERA);
+					if (getTimer(sourceId) != 0) {
+						leftToSend[sourceId] = 0;
+						//operatingTimers.pop();
+						cancelTimer(sourceId);
+					}
 					break;
 				}
 				default: break;
@@ -183,7 +181,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					//my_plugin_number = sourceId*2;
 					dataSN[sourceId]++;
 					
-					reSend[sourceId] = 1;
+					leftToSend[sourceId] = 1;
 					//i = 1;
 					//for(unsigned int i = 1; i < numNodes; i++){
 					//if (reSend[i]){
@@ -193,7 +191,14 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					//}
 					//if (i == 6)
 					//i = 1;
-					setTimer(SEND_PACKET, 0);
+					if (m_SETTIMER) {
+					setTimer(sourceId, 3);
+					m_SETTIMER = 0;
+					}
+					
+					trace() << "Sending packet #" << dataSN[sourceId] << " to node " << sourceId;//sequence number
+					toNetworkLayer(createGenericDataPackett(dataSN[sourceId]), source);
+					packetsSent[recipientId]++;
 				}
 			}else {
 				trace() << "Packet #" << sequenceNumber << " from node " << source <<
@@ -211,59 +216,98 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 void Manager::timerFiredCallback(int index)
 {
 	Context *ctx;
-	for (unsigned int i = 1; i < numNodes; i++) {
-	if (reSend[i]) {
-	my_plugin_number = i*2;
+	my_plugin_number = index*2;
 	m_CONTEXT_ID = {my_plugin_number, 0};
 	ctx = context_get_and_lock(m_CONTEXT_ID);
+	leftToSend[index] = 0;
 	
-	switch (index) {
-		case SEND_PACKET:{
-			trace() << "Sending packet #" << dataSN[i];//sequence number
-			const char* recipient = std::to_string(i).c_str();
-			toNetworkLayer(createGenericDataPackett(dataSN[i]), recipient);
-			reSend[i] = 0;
-			packetsSent[recipientId]++;
-			fsm_states c = ctx->fsm->state;
-			switch(c) {
-				case fsm_state_associating:{
-					if (RC[i])
-					setTimer(TO_ASSOC, 10);
-					break;
-				}
-				case fsm_state_operating:{
-					setTimer(TO_OPERA, 3);
-					break;
-				}
-				default: break;
-			}
-
+	fsm_states c = ctx->fsm->state;
+	switch(c){
+		case fsm_state_operating:{
+			trace() << "response not received for packet #" << dataSN[index] << " from node " << index << " in operating mode ";//sequence number
 			break;
 		}
-		
-		case TO_ASSOC:{
-			if (RC[i] == 0)
-				manager_request_association_abort(m_CONTEXT_ID);
-			else {
-				trace() << "resending packet #" << dataSN[i];//sequence number
-				const char* recipient = std::to_string(i).c_str();
-				toNetworkLayer(createGenericDataPackett(dataSN[i]), recipient);
-				packetsSent[recipientId]++;
-				setTimer(TO_ASSOC, 10);
-				RC[i]--;
-			}
+		case fsm_state_associating:{
+			trace() << "response not received for packet #" << dataSN[index] << " from node " << index << " in associating mode ";//sequence number
 			break;
 		}
-		
-		case TO_OPERA:{
-				manager_request_association_abort(m_CONTEXT_ID);
-			break;
-		}
+		default: break;
 	}
+	
+	manager_request_association_abort(m_CONTEXT_ID);
+	const char* recipient = std::to_string(index).c_str();
+	dataSN[index]++;
+	trace() << "Sending packet #" << dataSN[index] << " to node " << index;//sequence number
+	toNetworkLayer(createGenericDataPackett(dataSN[index]), recipient);
+	packetsSent[recipientId]++;
 	context_unlock(ctx);
-}
-}
-
+	//switch (index) {
+		//case SEND_PACKET:{
+			//Context *ctx;
+		//for (unsigned int i = 1; i < numNodes; i++) {
+			//if (reSend[i]) {
+					//my_plugin_number = i*2;
+					//m_CONTEXT_ID = {my_plugin_number, 0};
+					//ctx = context_get_and_lock(m_CONTEXT_ID);
+					//trace() << "Sending packet #" << dataSN[i];//sequence number
+					//const char* recipient = std::to_string(i).c_str();
+					//toNetworkLayer(createGenericDataPackett(dataSN[i]), recipient);
+					//reSend[i] = 0;
+					//packetsSent[recipientId]++;
+					//fsm_states c = ctx->fsm->state;
+					//switch(c) {
+						//case fsm_state_operating:{
+							////node has timeout
+							//leftToSend[i] = 1;
+							////operatingTimers.push_back(i);
+							////node id
+							//setTimer(i, 3);
+							//break;
+						//}
+						//default: break;
+					//}
+			//}
+		//}
+			//context_unlock(ctx);
+			//break;
+		//}
+		
+		////case TO_ASSOC:{
+			//////opção inválida, concertar
+			////if (RC[0] == 0)
+				////manager_request_association_abort(m_CONTEXT_ID);
+			////else {
+				////trace() << "resending packet #" << dataSN[i];//sequence number
+				////const char* recipient = std::to_string(i).c_str();
+				////toNetworkLayer(createGenericDataPackett(dataSN[i]), recipient);
+				////packetsSent[recipientId]++;
+				////setTimer(TO_ASSOC, 10);
+				////RC[i]--;
+			////}
+			////break;
+		////}
+		
+		////case TO_OPERA:{
+				////int node = operatingTimers.front();
+				////leftToSend[node] = 0;
+				////trace() << "response not received for packet #" << dataSN[i] << " from node " << i << " aborting...";//sequence number
+				////m_CONTEXT_ID = {node*2, 0};
+				////manager_request_association_abort(m_CONTEXT_ID);
+				////const char* recipient = std::to_string(node).c_str();
+				////toNetworkLayer(createGenericDataPackett(dataSN[node]), recipient);
+				////operatingTimers.pop_front();
+			////break;
+		////}
+		//default:{
+			//leftToSend[index] = 0;
+			//trace() << "response not received for packet #" << dataSN[index] << " from node " << index << " aborting...";//sequence number
+			//manager_request_association_abort(m_CONTEXT_ID);
+			////const char* recipient = std::to_string(index).c_str();
+			////toNetworkLayer(createGenericDataPackett(dataSN[index]), recipient);
+			//break;
+		//}
+	//}
+	
 }
 
 //void Manager::timerFiredCallback(int index)
@@ -361,14 +405,21 @@ void Manager::finishSpecific() {
 		collectOutput("Energy nJ/bit","",energy);
 	}
 	manager_finalize(m_CONTEXT_ID);
-	if (m_st_msg != NULL)
+	if (m_st_msg != NULL) {
 	delete[] m_st_msg;
+	m_st_msg = NULL;
+	}
+	
+	if (m_comm_plugin != NULL) {
+	delete[] m_comm_plugin;
+	m_comm_plugin = NULL;
+	}
 }
 
 MyPacket* Manager::createGenericDataPackett(int seqNum)
 {
 	MyPacket *pktt = new MyPacket("mypacket", APPLICATION_PACKET);
-	pktt->setExtraData(m_st_msg[my_plugin_number/2]);
+	pktt->setExtraData(m_st_msg[recipientId]);
 	pktt->setSequenceNumber(seqNum);
 	return pktt;
 }

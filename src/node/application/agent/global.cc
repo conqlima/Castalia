@@ -48,7 +48,8 @@ ContextId CONTEXT_ID = {1, 0};
 /**
  * PLugin definition
  */
-CommunicationPlugin comm_plugin[6] = {COMMUNICATION_PLUGIN_NULL};
+//CommunicationPlugin comm_plugin[6];
+//CommunicationPlugin comm_plugin[6] = {COMMUNICATION_PLUGIN_NULL};
 //comm_plugin[0] = COMMUNICATION_PLUGIN_NULL;
 //comm_plugin[1] = COMMUNICATION_PLUGIN_NULL;
 //comm_plugin[2] = COMMUNICATION_PLUGIN_NULL;
@@ -64,6 +65,7 @@ CommunicationPlugin comm_plugin[6] = {COMMUNICATION_PLUGIN_NULL};
  */
 int timer_count_timeout(Context *ctx)
 {
+	SETTIMER = 1;
 	return 1;
 }
 

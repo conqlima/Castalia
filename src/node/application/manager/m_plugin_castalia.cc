@@ -310,7 +310,6 @@ static int m_network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 static int m_network_disconnect(Context *ctx)
 {
 	DEBUG("taking the initiative of disconnection");
-	//close(sk);
 	sk = -1;
 	free(buffer);
 	buffer = 0;

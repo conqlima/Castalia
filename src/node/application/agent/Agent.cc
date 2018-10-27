@@ -5,6 +5,8 @@ Define_Module(Agent);
 //const int tam = getNumberOfNodes();
 
 Tmsg* st_msg = NULL;
+CommunicationPlugin* comm_plugin = NULL;
+int SETTIMER = 0;
 
 void Agent::startup()
 {
@@ -21,14 +23,14 @@ void Agent::startup()
 	//alarmt = (int) alarmt*time_in_sec;
 	j = 0;
 	RC = 3;
+	SETTIMER = 0;
 	time_limit = par("time_limit").stringValue();
 	simtime_t t = STR_SIMTIME(time_limit.c_str());
 	total_sec = t.inUnit(SIMTIME_S);
 	alarmt = (int) (total_sec*reading_rate);
 	data_spacing = reading_rate > 0 ? 1.0 / reading_rate : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
-	
 	last_packet = -1;
-	
+
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
 	if (st_msg == NULL)
 	st_msg = new Tmsg[numNodes];
@@ -48,6 +50,16 @@ void Agent::startup()
 	}
 	
 	nodeNumber = atoi(SELF_NETWORK_ADDRESS);
+	
+	if (comm_plugin == NULL) {
+	comm_plugin = new CommunicationPlugin[numNodes];
+	 comm_plugin[0] = COMMUNICATION_PLUGIN_NULL;
+	 comm_plugin[1] = COMMUNICATION_PLUGIN_NULL;
+	 comm_plugin[2] = COMMUNICATION_PLUGIN_NULL;
+	 comm_plugin[3] = COMMUNICATION_PLUGIN_NULL;
+	 comm_plugin[4] = COMMUNICATION_PLUGIN_NULL;
+	 comm_plugin[5] = COMMUNICATION_PLUGIN_NULL;
+	}
 	
 	comm_plugin[nodeNumber] = communication_plugin();
 	castalia_mode(nodeNumber);
@@ -165,18 +177,20 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		Tmsg tmp = rcvPacket->getExtraData();
 		st_msg[nodeNumber].tam_buff = tmp.tam_buff;
 		
-		/*Copia informação do pacote recebido para m_st_msg*/
+		/*Copia informação do pacote recebido para st_msg*/
 		for (int i = 0; i < st_msg[nodeNumber].tam_buff; i++)
 		{
 			st_msg[nodeNumber].buff_msg[i] = tmp.buff_msg[i];
 		}
+		
+		st_msg[nodeNumber].send_str = tmp.send_str;
 		
 		if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
 		
 			//delaylimit == 0 (sem limite) ou o tempo atual da simulação menos a hora q o pacote foi criado
 			if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit) { 
 
-				trace() << "Received packet #" << sequenceNumber << " from node " << source;
+				trace() << "Received packet #" << sequenceNumber << " from node " << source << " type: " << st_msg[nodeNumber].send_str.c_str();
 				collectOutput("Packets received per node", sourceId);//Adds one to the value of output name with index 3.
 				packetsReceived[sourceId]++;
 				bytesReceived[sourceId] += rcvPacket->getByteLength();
@@ -188,8 +202,11 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 				/*verifica se no pacote recebido existe dados*/
 				if (st_msg[nodeNumber].tam_buff > 0) {
 					/*ler todos os dados do buffer*/
-					while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE))
+					while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE)) {
+						
 						communication_read_input_stream(ctx->id);
+						trace() << "type: " << st_msg[nodeNumber].send_str.c_str();
+					}
 				}
 				
 				/*Verifica se o agente já pode enviar leituras*/
@@ -269,7 +286,7 @@ void Agent::timerFiredCallback(int index)
 	
 	switch (index) {
 		case SEND_PACKET:{
-			trace() << "Sending packet #" << dataSN;//sequence number
+			trace() << "Sending packet #" << dataSN << " to node " << recipientAddress.c_str();//sequence number
 			toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
 			packetsSent[recipientId]++;
 			fsm_states c = ctx->fsm->state;
@@ -280,8 +297,10 @@ void Agent::timerFiredCallback(int index)
 					break;
 				}
 				case fsm_state_operating: {
-					//setTimer(SEND_PACKET, data_spacing-1);
-					setTimer(TO_OPERA, 3);
+					if (SETTIMER) {
+						setTimer(TO_OPERA, 3);
+						SETTIMER = 0;
+					}
 					break;
 				}
 				default: break;
@@ -291,9 +310,11 @@ void Agent::timerFiredCallback(int index)
 		}
 		
 		case TO_ASSOC:{
-			if (RC == 0)
+			if (RC == 0) {
+				trace() << "response not received for packet #" << dataSN << " in association mode aborting...";
 				agent_request_association_abort(CONTEXT_ID);
-			else {
+				toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
+			}else {
 				trace() << "resending packet #" << dataSN;//sequence number
 				toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
 				packetsSent[recipientId]++;
@@ -304,8 +325,9 @@ void Agent::timerFiredCallback(int index)
 		}
 		
 		case TO_OPERA:{
-				trace() << "response not received for packet #" << dataSN << " aborting...";//sequence number
+				trace() << "response not received for packet #" << dataSN << " in operating mode, aborting...";//sequence number
 				agent_request_association_abort(CONTEXT_ID);
+				toNetworkLayer(createGenericDataPackett(dataSN), recipientAddress.c_str());
 			break;
 		}
 	}
@@ -358,6 +380,11 @@ void Agent::finishSpecific() {
 	if (st_msg != NULL) {
 	delete[] st_msg;
 	st_msg = NULL;
+	}
+	
+	if (comm_plugin != NULL) {
+	delete[] comm_plugin;
+	comm_plugin = NULL;
 	}
 }
 
