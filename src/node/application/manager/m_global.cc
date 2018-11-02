@@ -160,7 +160,8 @@ void device_reqmdsattr()
  */
 int m_timer_count_timeout(Context *ctx)
 {
-	m_SETTIMER = 1;
+	unsigned int nodeId = (ctx->id.plugin) / 2;
+	m_SETTIMER[nodeId] = 1;
 	return 1;
 }
 

@@ -4,7 +4,7 @@ Define_Module(Manager);
 
 Tmsg* m_st_msg = NULL;
 CommunicationPlugin* m_comm_plugin;
-int m_SETTIMER = 0;
+int m_SETTIMER[6] = {0};
 
 void Manager::startup()
 {
@@ -15,7 +15,7 @@ void Manager::startup()
 	delayLimit = par("delayLimit");
 	packet_spacing = packet_rate > 0 ? 1 / float (packet_rate) : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
-	m_SETTIMER = 0;
+	//m_SETTIMER = 0;
 	//dataSN = new int[numNodes];
 	//last_packet = new int[numNodes];
 	//leftToSend = new int[numNodes];
@@ -147,14 +147,17 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		last_packet[sourceId] = sequenceNumber;
 		
 		/*Recebe o pacote numa estrutura temporária*/
-		Tmsg tmp = rcvPacket->getExtraData();
-		m_st_msg[sourceId].tam_buff = tmp.tam_buff;
+		//Tmsg tmp = rcvPacket->getExtraData();
+		//m_st_msg[sourceId].tam_buff = tmp.tam_buff;
+		m_st_msg[sourceId] = rcvPacket->getExtraData();
+		///*Copia informação do pacote recebido para m_st_msg*/
+		//for (int i = 0; i < m_st_msg[sourceId].tam_buff; i++)
+		//{
+			//m_st_msg[sourceId].buff_msg[i] = tmp.buff_msg[i];
+		//}
 		
-		/*Copia informação do pacote recebido para m_st_msg*/
-		for (int i = 0; i < m_st_msg[sourceId].tam_buff; i++)
-		{
-			m_st_msg[sourceId].buff_msg[i] = tmp.buff_msg[i];
-		}
+		//m_st_msg[sourceId].send_str = tmp.send_str;
+		//m_st_msg[sourceId].recv_str = tmp.recv_str;
 		
 		if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
 			
@@ -174,12 +177,17 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					m_ctx = context_get_and_lock(m_CONTEXT_ID);
 					
 					/*ler todos os dados do buffer*/
-					while((communication_wait_for_data_input(m_ctx)) == NETWORK_ERROR_NONE)
+					while((communication_wait_for_data_input(m_ctx)) == NETWORK_ERROR_NONE) {
 						communication_read_input_stream(m_ctx->id);
-					
+						//trace() << "type: " << m_st_msg[sourceId].recv_str.c_str();
+						//while(!m_st_msg[nodeNumber].fila.empty()){
+							trace() << "type: " << m_st_msg[sourceId].fila.front();
+							m_st_msg[sourceId].fila.pop();
+						//}
+					}
 					context_unlock(m_ctx);
 					//my_plugin_number = sourceId*2;
-					dataSN[sourceId]++;
+
 					
 					leftToSend[sourceId] = 1;
 					//i = 1;
@@ -191,14 +199,22 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					//}
 					//if (i == 6)
 					//i = 1;
-					if (m_SETTIMER) {
+					if (m_SETTIMER[sourceId]) {
 					setTimer(sourceId, 3);
-					m_SETTIMER = 0;
+					m_SETTIMER[sourceId] = 0;
 					}
 					
-					trace() << "Sending packet #" << dataSN[sourceId] << " to node " << sourceId;//sequence number
-					toNetworkLayer(createGenericDataPackett(dataSN[sourceId]), source);
-					packetsSent[recipientId]++;
+					if (m_st_msg[sourceId].tam_buff > 0) {
+						dataSN[sourceId]++;
+						trace() << "Sending packet #" << dataSN[sourceId] << " to node " << sourceId;//sequence number
+						toNetworkLayer(createGenericDataPackett(dataSN[sourceId]), source);
+						//trace() << "type: " << m_st_msg[sourceId].send_str.c_str();
+						while(!m_st_msg[sourceId].fila.empty()){
+							trace() << "type: " << m_st_msg[sourceId].fila.front();
+							m_st_msg[sourceId].fila.pop();
+						}
+						packetsSent[recipientId]++;
+					}
 				}
 			}else {
 				trace() << "Packet #" << sequenceNumber << " from node " << source <<
@@ -234,11 +250,23 @@ void Manager::timerFiredCallback(int index)
 		default: break;
 	}
 	
+	for (int i = 0; i < m_st_msg[index].tam_buff; i++)
+	{
+		m_st_msg[index].buff_msg[i] = '\0';
+	}
+	
+	m_st_msg[index].tam_buff = 0;
+	
 	manager_request_association_abort(m_CONTEXT_ID);
 	const char* recipient = std::to_string(index).c_str();
 	dataSN[index]++;
 	trace() << "Sending packet #" << dataSN[index] << " to node " << index;//sequence number
 	toNetworkLayer(createGenericDataPackett(dataSN[index]), recipient);
+	//trace() << "type: " << m_st_msg[index].send_str.c_str();
+	while(!m_st_msg[index].fila.empty()){
+		trace() << "type: " << m_st_msg[index].fila.front();
+		m_st_msg[index].fila.pop();
+	}
 	packetsSent[recipientId]++;
 	context_unlock(ctx);
 	//switch (index) {
@@ -419,7 +447,10 @@ void Manager::finishSpecific() {
 MyPacket* Manager::createGenericDataPackett(int seqNum)
 {
 	MyPacket *pktt = new MyPacket("mypacket", APPLICATION_PACKET);
-	pktt->setExtraData(m_st_msg[recipientId]);
+	//pktt->setExtraData(m_st_msg[recipientId]);
+	pktt->setExtraData(m_st_msg[my_plugin_number/2]);
 	pktt->setSequenceNumber(seqNum);
+	//pktt->setByteLength(m_st_msg[recipientId].tam_buff);
+	pktt->setByteLength(m_st_msg[my_plugin_number/2].tam_buff);
 	return pktt;
 }

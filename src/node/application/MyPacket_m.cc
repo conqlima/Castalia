@@ -64,6 +64,7 @@ Tmsg::Tmsg()
 
 void doPacking(cCommBuffer *b, Tmsg& a)
 {
+    doPacking(b,a.fila);
     doPacking(b,a.send_str);
     doPacking(b,a.recv_str);
     doPacking(b,a.buff_msg,65535);
@@ -72,6 +73,7 @@ void doPacking(cCommBuffer *b, Tmsg& a)
 
 void doUnpacking(cCommBuffer *b, Tmsg& a)
 {
+    doUnpacking(b,a.fila);
     doUnpacking(b,a.send_str);
     doUnpacking(b,a.recv_str);
     doUnpacking(b,a.buff_msg,65535);
@@ -125,7 +127,7 @@ const char *TmsgDescriptor::getProperty(const char *propertyname) const
 int TmsgDescriptor::getFieldCount(void *object) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 4+basedesc->getFieldCount(object) : 4;
+    return basedesc ? 5+basedesc->getFieldCount(object) : 5;
 }
 
 unsigned int TmsgDescriptor::getFieldTypeFlags(void *object, int field) const
@@ -137,12 +139,13 @@ unsigned int TmsgDescriptor::getFieldTypeFlags(void *object, int field) const
         field -= basedesc->getFieldCount(object);
     }
     static unsigned int fieldTypeFlags[] = {
+        FD_ISCOMPOUND,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISARRAY | FD_ISEDITABLE,
         FD_ISEDITABLE,
     };
-    return (field>=0 && field<4) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<5) ? fieldTypeFlags[field] : 0;
 }
 
 const char *TmsgDescriptor::getFieldName(void *object, int field) const
@@ -154,22 +157,24 @@ const char *TmsgDescriptor::getFieldName(void *object, int field) const
         field -= basedesc->getFieldCount(object);
     }
     static const char *fieldNames[] = {
+        "fila",
         "send_str",
         "recv_str",
         "buff_msg",
         "tam_buff",
     };
-    return (field>=0 && field<4) ? fieldNames[field] : NULL;
+    return (field>=0 && field<5) ? fieldNames[field] : NULL;
 }
 
 int TmsgDescriptor::findField(void *object, const char *fieldName) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount(object) : 0;
-    if (fieldName[0]=='s' && strcmp(fieldName, "send_str")==0) return base+0;
-    if (fieldName[0]=='r' && strcmp(fieldName, "recv_str")==0) return base+1;
-    if (fieldName[0]=='b' && strcmp(fieldName, "buff_msg")==0) return base+2;
-    if (fieldName[0]=='t' && strcmp(fieldName, "tam_buff")==0) return base+3;
+    if (fieldName[0]=='f' && strcmp(fieldName, "fila")==0) return base+0;
+    if (fieldName[0]=='s' && strcmp(fieldName, "send_str")==0) return base+1;
+    if (fieldName[0]=='r' && strcmp(fieldName, "recv_str")==0) return base+2;
+    if (fieldName[0]=='b' && strcmp(fieldName, "buff_msg")==0) return base+3;
+    if (fieldName[0]=='t' && strcmp(fieldName, "tam_buff")==0) return base+4;
     return basedesc ? basedesc->findField(object, fieldName) : -1;
 }
 
@@ -182,12 +187,13 @@ const char *TmsgDescriptor::getFieldTypeString(void *object, int field) const
         field -= basedesc->getFieldCount(object);
     }
     static const char *fieldTypeStrings[] = {
+        "TypeMsg",
         "string",
         "string",
         "uint8_t",
         "int",
     };
-    return (field>=0 && field<4) ? fieldTypeStrings[field] : NULL;
+    return (field>=0 && field<5) ? fieldTypeStrings[field] : NULL;
 }
 
 const char *TmsgDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
@@ -213,7 +219,7 @@ int TmsgDescriptor::getArraySize(void *object, int field) const
     }
     Tmsg *pp = (Tmsg *)object; (void)pp;
     switch (field) {
-        case 2: return 65535;
+        case 3: return 65535;
         default: return 0;
     }
 }
@@ -228,11 +234,12 @@ std::string TmsgDescriptor::getFieldAsString(void *object, int field, int i) con
     }
     Tmsg *pp = (Tmsg *)object; (void)pp;
     switch (field) {
-        case 0: return oppstring2string(pp->send_str);
-        case 1: return oppstring2string(pp->recv_str);
-        case 2: if (i>=65535) return "";
+        case 0: {std::stringstream out; out << pp->fila; return out.str();}
+        case 1: return oppstring2string(pp->send_str);
+        case 2: return oppstring2string(pp->recv_str);
+        case 3: if (i>=65535) return "";
                 return ulong2string(pp->buff_msg[i]);
-        case 3: return long2string(pp->tam_buff);
+        case 4: return long2string(pp->tam_buff);
         default: return "";
     }
 }
@@ -247,11 +254,11 @@ bool TmsgDescriptor::setFieldAsString(void *object, int field, int i, const char
     }
     Tmsg *pp = (Tmsg *)object; (void)pp;
     switch (field) {
-        case 0: pp->send_str = (value); return true;
-        case 1: pp->recv_str = (value); return true;
-        case 2: if (i>=65535) return false;
+        case 1: pp->send_str = (value); return true;
+        case 2: pp->recv_str = (value); return true;
+        case 3: if (i>=65535) return false;
                 pp->buff_msg[i] = string2ulong(value); return true;
-        case 3: pp->tam_buff = string2long(value); return true;
+        case 4: pp->tam_buff = string2long(value); return true;
         default: return false;
     }
 }
@@ -265,6 +272,7 @@ const char *TmsgDescriptor::getFieldStructName(void *object, int field) const
         field -= basedesc->getFieldCount(object);
     }
     switch (field) {
+        case 0: return opp_typename(typeid(TypeMsg));
         default: return NULL;
     };
 }
@@ -279,6 +287,7 @@ void *TmsgDescriptor::getFieldStructPointer(void *object, int field, int i) cons
     }
     Tmsg *pp = (Tmsg *)object; (void)pp;
     switch (field) {
+        case 0: return (void *)(&pp->fila); break;
         default: return NULL;
     }
 }

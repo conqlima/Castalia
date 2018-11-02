@@ -29,7 +29,7 @@ extern unsigned long long m_port;
  */
 extern Tmsg* m_st_msg;
 
-extern int m_SETTIMER;
+extern int m_SETTIMER[6];
 
 void m_timer_reset_timeout(Context *ctx);
 int m_timer_count_timeout(Context *ctx);

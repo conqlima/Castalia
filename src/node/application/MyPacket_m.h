@@ -17,6 +17,11 @@
 
 // cplusplus {{
 #include "ApplicationPacket_m.h"
+#include <string>
+#include <queue>
+#include <stack>
+
+typedef std::queue<const char*> TypeMsg;
 
 extern "C" {
 #include "communication/plugin/plugin.h"
@@ -26,11 +31,12 @@ extern "C" {
 // }}
 
 /**
- * Struct generated from src/node/application/MyPacket.msg:15 by nedtool.
+ * Struct generated from src/node/application/MyPacket.msg:20 by nedtool.
  */
 struct Tmsg
 {
     Tmsg();
+    TypeMsg fila;
     opp_string send_str;
     opp_string recv_str;
     uint8_t buff_msg[65535];
@@ -41,7 +47,7 @@ void doPacking(cCommBuffer *b, Tmsg& a);
 void doUnpacking(cCommBuffer *b, Tmsg& a);
 
 /**
- * Class generated from <tt>src/node/application/MyPacket.msg:22</tt> by nedtool.
+ * Class generated from <tt>src/node/application/MyPacket.msg:28</tt> by nedtool.
  * <pre>
  * packet MyPacket extends ApplicationPacket
  * {

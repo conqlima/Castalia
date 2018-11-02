@@ -65,7 +65,8 @@ ContextId CONTEXT_ID = {1, 0};
  */
 int timer_count_timeout(Context *ctx)
 {
-	SETTIMER = 1;
+	unsigned int nodeId = (ctx->id.plugin+1) / 2;
+	SETTIMER[nodeId] = 1;
 	return 1;
 }
 

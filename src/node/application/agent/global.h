@@ -19,7 +19,7 @@ extern CommunicationPlugin* comm_plugin;
 //one struct for each node, the position 0 is invalid
 extern Tmsg* st_msg;
 
-extern int SETTIMER;
+extern int* SETTIMER;
 
 void timer_reset_timeout(Context *ctx);
 int timer_count_timeout(Context *ctx);
