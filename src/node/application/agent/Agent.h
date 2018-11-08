@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 #include <csignal>
+#include <cstdlib>
 
 extern "C" {
 #include "communication/plugin/plugin.h"
@@ -25,6 +26,8 @@ extern "C" {
 
 using namespace std;
 
+#define RC_COUNT 3 //number of retransmissions tries
+
 enum AgentTimers {
 	SEND_PACKET = 1,
 	TO_ASSOC,
@@ -37,27 +40,26 @@ class Agent : public VirtualApplication {
 	double packet_rate;
 	double startupDelay;
 	double delayLimit;
+	double reading_rate;
 	float packet_spacing;
+	float data_spacing;
 	int dataSN;
 	int recipientId;
-	string recipientAddress;
 	int alarmt;
-	unsigned int my_plugin_number;
 	int last_packet;
-	string application_name;
 	int specialization;
-	unsigned int opt;
-	void* (*event_report_cb)();
-	unsigned int nodeNumber;
-	string time_limit;
 	int total_sec;
-	double reading_rate;
-	float data_spacing;
-	int j;
 	int RC;
+	int numNodes;
+	unsigned int my_plugin_number;
+	unsigned int opt;
+	unsigned int nodeNumber;
+	string recipientAddress;
+	string application_name;
+	string time_limit;
+	void* (*event_report_cb)();
 	
 	//variables below are used to determine the packet delivery rates.	
-	int numNodes;
 	map<long,int> packetsReceived;
 	map<long,int> bytesReceived;
 	map<long,int> packetsSent;
@@ -68,13 +70,13 @@ class Agent : public VirtualApplication {
 	void handleRadioControlMessage(RadioControlMessage *);
 	void timerFiredCallback(int);
 	void finishSpecific();
+	MyPacket* createDataPacket(int seqNum);
 
  public:
 	int getPacketsSent(int addr) { return packetsSent[addr]; }
 	int getPacketsReceived(int addr) { return packetsReceived[addr]; }
 	int getBytesReceived(int addr) { return bytesReceived[addr]; }
 	int getNumberOfNodes() { return getParentModule()->getParentModule()->par("numNodes");}
-	MyPacket* createGenericDataPackett(int seqNum);
 
 };
 

@@ -53,258 +53,25 @@ inline std::ostream& operator<<(std::ostream& out, const std::vector<T,A>& vec)
 template<typename T>
 inline std::ostream& operator<<(std::ostream& out,const T&) {return out;}
 
-Tmsg::Tmsg()
-{
-    send_str = 0;
-    recv_str = 0;
-    for (unsigned int i=0; i<65535; i++)
-        buff_msg[i] = 0;
-    tam_buff = 0;
-}
-
-void doPacking(cCommBuffer *b, Tmsg& a)
-{
-    doPacking(b,a.fila);
-    doPacking(b,a.send_str);
-    doPacking(b,a.recv_str);
-    doPacking(b,a.buff_msg,65535);
-    doPacking(b,a.tam_buff);
-}
-
-void doUnpacking(cCommBuffer *b, Tmsg& a)
-{
-    doUnpacking(b,a.fila);
-    doUnpacking(b,a.send_str);
-    doUnpacking(b,a.recv_str);
-    doUnpacking(b,a.buff_msg,65535);
-    doUnpacking(b,a.tam_buff);
-}
-
-class TmsgDescriptor : public cClassDescriptor
-{
-  public:
-    TmsgDescriptor();
-    virtual ~TmsgDescriptor();
-
-    virtual bool doesSupport(cObject *obj) const;
-    virtual const char *getProperty(const char *propertyname) const;
-    virtual int getFieldCount(void *object) const;
-    virtual const char *getFieldName(void *object, int field) const;
-    virtual int findField(void *object, const char *fieldName) const;
-    virtual unsigned int getFieldTypeFlags(void *object, int field) const;
-    virtual const char *getFieldTypeString(void *object, int field) const;
-    virtual const char *getFieldProperty(void *object, int field, const char *propertyname) const;
-    virtual int getArraySize(void *object, int field) const;
-
-    virtual std::string getFieldAsString(void *object, int field, int i) const;
-    virtual bool setFieldAsString(void *object, int field, int i, const char *value) const;
-
-    virtual const char *getFieldStructName(void *object, int field) const;
-    virtual void *getFieldStructPointer(void *object, int field, int i) const;
-};
-
-Register_ClassDescriptor(TmsgDescriptor);
-
-TmsgDescriptor::TmsgDescriptor() : cClassDescriptor("Tmsg", "")
-{
-}
-
-TmsgDescriptor::~TmsgDescriptor()
-{
-}
-
-bool TmsgDescriptor::doesSupport(cObject *obj) const
-{
-    return dynamic_cast<Tmsg *>(obj)!=NULL;
-}
-
-const char *TmsgDescriptor::getProperty(const char *propertyname) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? basedesc->getProperty(propertyname) : NULL;
-}
-
-int TmsgDescriptor::getFieldCount(void *object) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 5+basedesc->getFieldCount(object) : 5;
-}
-
-unsigned int TmsgDescriptor::getFieldTypeFlags(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldTypeFlags(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    static unsigned int fieldTypeFlags[] = {
-        FD_ISCOMPOUND,
-        FD_ISEDITABLE,
-        FD_ISEDITABLE,
-        FD_ISARRAY | FD_ISEDITABLE,
-        FD_ISEDITABLE,
-    };
-    return (field>=0 && field<5) ? fieldTypeFlags[field] : 0;
-}
-
-const char *TmsgDescriptor::getFieldName(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldName(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    static const char *fieldNames[] = {
-        "fila",
-        "send_str",
-        "recv_str",
-        "buff_msg",
-        "tam_buff",
-    };
-    return (field>=0 && field<5) ? fieldNames[field] : NULL;
-}
-
-int TmsgDescriptor::findField(void *object, const char *fieldName) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    int base = basedesc ? basedesc->getFieldCount(object) : 0;
-    if (fieldName[0]=='f' && strcmp(fieldName, "fila")==0) return base+0;
-    if (fieldName[0]=='s' && strcmp(fieldName, "send_str")==0) return base+1;
-    if (fieldName[0]=='r' && strcmp(fieldName, "recv_str")==0) return base+2;
-    if (fieldName[0]=='b' && strcmp(fieldName, "buff_msg")==0) return base+3;
-    if (fieldName[0]=='t' && strcmp(fieldName, "tam_buff")==0) return base+4;
-    return basedesc ? basedesc->findField(object, fieldName) : -1;
-}
-
-const char *TmsgDescriptor::getFieldTypeString(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldTypeString(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    static const char *fieldTypeStrings[] = {
-        "TypeMsg",
-        "string",
-        "string",
-        "uint8_t",
-        "int",
-    };
-    return (field>=0 && field<5) ? fieldTypeStrings[field] : NULL;
-}
-
-const char *TmsgDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldProperty(object, field, propertyname);
-        field -= basedesc->getFieldCount(object);
-    }
-    switch (field) {
-        default: return NULL;
-    }
-}
-
-int TmsgDescriptor::getArraySize(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getArraySize(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    Tmsg *pp = (Tmsg *)object; (void)pp;
-    switch (field) {
-        case 3: return 65535;
-        default: return 0;
-    }
-}
-
-std::string TmsgDescriptor::getFieldAsString(void *object, int field, int i) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldAsString(object,field,i);
-        field -= basedesc->getFieldCount(object);
-    }
-    Tmsg *pp = (Tmsg *)object; (void)pp;
-    switch (field) {
-        case 0: {std::stringstream out; out << pp->fila; return out.str();}
-        case 1: return oppstring2string(pp->send_str);
-        case 2: return oppstring2string(pp->recv_str);
-        case 3: if (i>=65535) return "";
-                return ulong2string(pp->buff_msg[i]);
-        case 4: return long2string(pp->tam_buff);
-        default: return "";
-    }
-}
-
-bool TmsgDescriptor::setFieldAsString(void *object, int field, int i, const char *value) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->setFieldAsString(object,field,i,value);
-        field -= basedesc->getFieldCount(object);
-    }
-    Tmsg *pp = (Tmsg *)object; (void)pp;
-    switch (field) {
-        case 1: pp->send_str = (value); return true;
-        case 2: pp->recv_str = (value); return true;
-        case 3: if (i>=65535) return false;
-                pp->buff_msg[i] = string2ulong(value); return true;
-        case 4: pp->tam_buff = string2long(value); return true;
-        default: return false;
-    }
-}
-
-const char *TmsgDescriptor::getFieldStructName(void *object, int field) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldStructName(object, field);
-        field -= basedesc->getFieldCount(object);
-    }
-    switch (field) {
-        case 0: return opp_typename(typeid(TypeMsg));
-        default: return NULL;
-    };
-}
-
-void *TmsgDescriptor::getFieldStructPointer(void *object, int field, int i) const
-{
-    cClassDescriptor *basedesc = getBaseClassDescriptor();
-    if (basedesc) {
-        if (field < basedesc->getFieldCount(object))
-            return basedesc->getFieldStructPointer(object, field, i);
-        field -= basedesc->getFieldCount(object);
-    }
-    Tmsg *pp = (Tmsg *)object; (void)pp;
-    switch (field) {
-        case 0: return (void *)(&pp->fila); break;
-        default: return NULL;
-    }
-}
-
 Register_Class(MyPacket);
 
 MyPacket::MyPacket(const char *name, int kind) : ::ApplicationPacket(name,kind)
 {
+    buff_arraysize = 0;
+    this->buff_var = 0;
+    this->tam_buff_var = 0;
 }
 
 MyPacket::MyPacket(const MyPacket& other) : ::ApplicationPacket(other)
 {
+    buff_arraysize = 0;
+    this->buff_var = 0;
     copy(other);
 }
 
 MyPacket::~MyPacket()
 {
+    delete [] buff_var;
 }
 
 MyPacket& MyPacket::operator=(const MyPacket& other)
@@ -317,29 +84,74 @@ MyPacket& MyPacket::operator=(const MyPacket& other)
 
 void MyPacket::copy(const MyPacket& other)
 {
-    this->extraData_var = other.extraData_var;
+    delete [] this->buff_var;
+    this->buff_var = (other.buff_arraysize==0) ? NULL : new uint8_t[other.buff_arraysize];
+    buff_arraysize = other.buff_arraysize;
+    for (unsigned int i=0; i<buff_arraysize; i++)
+        this->buff_var[i] = other.buff_var[i];
+    this->tam_buff_var = other.tam_buff_var;
 }
 
 void MyPacket::parsimPack(cCommBuffer *b)
 {
     ::ApplicationPacket::parsimPack(b);
-    doPacking(b,this->extraData_var);
+    b->pack(buff_arraysize);
+    doPacking(b,this->buff_var,buff_arraysize);
+    doPacking(b,this->tam_buff_var);
 }
 
 void MyPacket::parsimUnpack(cCommBuffer *b)
 {
     ::ApplicationPacket::parsimUnpack(b);
-    doUnpacking(b,this->extraData_var);
+    delete [] this->buff_var;
+    b->unpack(buff_arraysize);
+    if (buff_arraysize==0) {
+        this->buff_var = 0;
+    } else {
+        this->buff_var = new uint8_t[buff_arraysize];
+        doUnpacking(b,this->buff_var,buff_arraysize);
+    }
+    doUnpacking(b,this->tam_buff_var);
 }
 
-Tmsg& MyPacket::getExtraData()
+void MyPacket::setBuffArraySize(unsigned int size)
 {
-    return extraData_var;
+    uint8_t *buff_var2 = (size==0) ? NULL : new uint8_t[size];
+    unsigned int sz = buff_arraysize < size ? buff_arraysize : size;
+    for (unsigned int i=0; i<sz; i++)
+        buff_var2[i] = this->buff_var[i];
+    for (unsigned int i=sz; i<size; i++)
+        buff_var2[i] = 0;
+    buff_arraysize = size;
+    delete [] this->buff_var;
+    this->buff_var = buff_var2;
 }
 
-void MyPacket::setExtraData(const Tmsg& extraData)
+unsigned int MyPacket::getBuffArraySize() const
 {
-    this->extraData_var = extraData;
+    return buff_arraysize;
+}
+
+uint8_t MyPacket::getBuff(unsigned int k) const
+{
+    if (k>=buff_arraysize) throw cRuntimeError("Array of size %d indexed by %d", buff_arraysize, k);
+    return buff_var[k];
+}
+
+void MyPacket::setBuff(unsigned int k, uint8_t buff)
+{
+    if (k>=buff_arraysize) throw cRuntimeError("Array of size %d indexed by %d", buff_arraysize, k);
+    this->buff_var[k] = buff;
+}
+
+int MyPacket::getTam_buff() const
+{
+    return tam_buff_var;
+}
+
+void MyPacket::setTam_buff(int tam_buff)
+{
+    this->tam_buff_var = tam_buff;
 }
 
 class MyPacketDescriptor : public cClassDescriptor
@@ -389,7 +201,7 @@ const char *MyPacketDescriptor::getProperty(const char *propertyname) const
 int MyPacketDescriptor::getFieldCount(void *object) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 1+basedesc->getFieldCount(object) : 1;
+    return basedesc ? 2+basedesc->getFieldCount(object) : 2;
 }
 
 unsigned int MyPacketDescriptor::getFieldTypeFlags(void *object, int field) const
@@ -401,9 +213,10 @@ unsigned int MyPacketDescriptor::getFieldTypeFlags(void *object, int field) cons
         field -= basedesc->getFieldCount(object);
     }
     static unsigned int fieldTypeFlags[] = {
-        FD_ISCOMPOUND,
+        FD_ISARRAY | FD_ISEDITABLE,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<1) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *MyPacketDescriptor::getFieldName(void *object, int field) const
@@ -415,16 +228,18 @@ const char *MyPacketDescriptor::getFieldName(void *object, int field) const
         field -= basedesc->getFieldCount(object);
     }
     static const char *fieldNames[] = {
-        "extraData",
+        "buff",
+        "tam_buff",
     };
-    return (field>=0 && field<1) ? fieldNames[field] : NULL;
+    return (field>=0 && field<2) ? fieldNames[field] : NULL;
 }
 
 int MyPacketDescriptor::findField(void *object, const char *fieldName) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount(object) : 0;
-    if (fieldName[0]=='e' && strcmp(fieldName, "extraData")==0) return base+0;
+    if (fieldName[0]=='b' && strcmp(fieldName, "buff")==0) return base+0;
+    if (fieldName[0]=='t' && strcmp(fieldName, "tam_buff")==0) return base+1;
     return basedesc ? basedesc->findField(object, fieldName) : -1;
 }
 
@@ -437,9 +252,10 @@ const char *MyPacketDescriptor::getFieldTypeString(void *object, int field) cons
         field -= basedesc->getFieldCount(object);
     }
     static const char *fieldTypeStrings[] = {
-        "Tmsg",
+        "uint8_t",
+        "int",
     };
-    return (field>=0 && field<1) ? fieldTypeStrings[field] : NULL;
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : NULL;
 }
 
 const char *MyPacketDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
@@ -465,6 +281,7 @@ int MyPacketDescriptor::getArraySize(void *object, int field) const
     }
     MyPacket *pp = (MyPacket *)object; (void)pp;
     switch (field) {
+        case 0: return pp->getBuffArraySize();
         default: return 0;
     }
 }
@@ -479,7 +296,8 @@ std::string MyPacketDescriptor::getFieldAsString(void *object, int field, int i)
     }
     MyPacket *pp = (MyPacket *)object; (void)pp;
     switch (field) {
-        case 0: {std::stringstream out; out << pp->getExtraData(); return out.str();}
+        case 0: return ulong2string(pp->getBuff(i));
+        case 1: return long2string(pp->getTam_buff());
         default: return "";
     }
 }
@@ -494,6 +312,8 @@ bool MyPacketDescriptor::setFieldAsString(void *object, int field, int i, const 
     }
     MyPacket *pp = (MyPacket *)object; (void)pp;
     switch (field) {
+        case 0: pp->setBuff(i,string2ulong(value)); return true;
+        case 1: pp->setTam_buff(string2long(value)); return true;
         default: return false;
     }
 }
@@ -507,7 +327,6 @@ const char *MyPacketDescriptor::getFieldStructName(void *object, int field) cons
         field -= basedesc->getFieldCount(object);
     }
     switch (field) {
-        case 0: return opp_typename(typeid(Tmsg));
         default: return NULL;
     };
 }
@@ -522,7 +341,6 @@ void *MyPacketDescriptor::getFieldStructPointer(void *object, int field, int i) 
     }
     MyPacket *pp = (MyPacket *)object; (void)pp;
     switch (field) {
-        case 0: return (void *)(&pp->getExtraData()); break;
         default: return NULL;
     }
 }

@@ -46,18 +46,6 @@ Define_Module(Agent);
 ContextId CONTEXT_ID = {1, 0};
 
 /**
- * PLugin definition
- */
-//CommunicationPlugin comm_plugin[6];
-//CommunicationPlugin comm_plugin[6] = {COMMUNICATION_PLUGIN_NULL};
-//comm_plugin[0] = COMMUNICATION_PLUGIN_NULL;
-//comm_plugin[1] = COMMUNICATION_PLUGIN_NULL;
-//comm_plugin[2] = COMMUNICATION_PLUGIN_NULL;
-//comm_plugin[3] = COMMUNICATION_PLUGIN_NULL;
-//comm_plugin[4] = COMMUNICATION_PLUGIN_NULL;
-//comm_plugin[5] = COMMUNICATION_PLUGIN_NULL;
-
-/**
  * Waits 0 milliseconds for timeout.
  *
  * @param ctx current context.

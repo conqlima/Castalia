@@ -2,9 +2,9 @@ package node.application.agent;
 simple Agent like node.application.iApplication
 	{
 	parameters:
-		string applicationID = default(""); //mandatory parameter
+		string applicationID = default("a"); //mandatory parameter
 		bool collectTraceInfo = default(false); // mandatory parameter
-		int priority = default(8); // mandatory parameter
+		int priority = default(1); // mandatory parameter
 		int packetHeaderOverhead = default(16);	// in bytes
 		int constantDataPayload = default(16);	// in bytes
 		
@@ -22,6 +22,7 @@ simple Agent like node.application.iApplication
 												// application-level static routing. This way we can
 												// have a multi-hop throughput test   
 
+		int hubNode = default (0);				// explict the hub (sink node) node number
 		double packet_rate = default (0);		// packets per second, by default we transmit no packets
 		double startupDelay = default (0);		// delay in seconds before the app stars producing packets
 

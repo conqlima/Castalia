@@ -36,5 +36,8 @@
 #include <communication/plugin/plugin.h>
 
 int plugin_network_castalia_agent_setup(CommunicationPlugin *plugin, int port);
+int getControlPacketsTotal(int addr);
+int getMeasurementPacketsTotal(int addr);
+void clearVarMap(void);
 
 #endif /*_PLUGIN_CASTALIA_H_*/

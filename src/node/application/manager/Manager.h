@@ -3,13 +3,14 @@
 
 #include "VirtualApplication.h"
 #include "MyPacket_m.h"
-
 #include "m_plugin_castalia.h"
 #include "m_global.h"
+#include "Agent.h"
 
 #include <iostream>
 #include <string>
 #include <csignal>
+#include <cstdlib>
 
 extern "C" {
 #include "communication/plugin/plugin.h"
@@ -23,9 +24,9 @@ extern "C" {
 
 using namespace std;
 
-enum ManagerTimers {
-	SEND_PACKET = 0
-};
+//enum ManagerTimers {
+	//SEND_PACKET = 0
+//};
 
 class Manager : public VirtualApplication {
 	
@@ -34,31 +35,19 @@ class Manager : public VirtualApplication {
 	double startupDelay;
 	double delayLimit;
 	float packet_spacing;
-	//int dataSN[6];
-	//int* dataSN = nullptr;
 	int recipientId;
 	string recipientAddress;
-	//int last_packet[6];
-	//int* last_packet = nullptr;
 	unsigned int my_plugin_number;
 	unsigned int numPlugin;
-	int leftToSend[6];
-	//int* leftToSend = nullptr;
-	int reSend[6];
-	//int* reSend = nullptr;
 	unsigned int numNodes;
-	unsigned int i = 1;
-	//list<int> operatingTimers;
-
 
 	//variables below are used to determine the packet delivery rates.	
 	map<long,int> packetsReceived;
 	map<long,int> bytesReceived;
 	map<long,int> packetsSent;
-	map<long,int> dataSN;
-	map<long,int> last_packet;
-	map<long,int> RC;
-
+	
+	map<long,int> dataSN;//data sequence number 
+	map<long,int> last_packet;//control duplicate packets
 
  protected:
 	void startup();
@@ -66,12 +55,12 @@ class Manager : public VirtualApplication {
 	void handleRadioControlMessage(RadioControlMessage *);
 	void timerFiredCallback(int);
 	void finishSpecific();
+	MyPacket* createDataPacket(int seqNum);
 
  public:
 	int getPacketsSent(int addr) { return packetsSent[addr]; }
 	int getPacketsReceived(int addr) { return packetsReceived[addr]; }
 	int getBytesReceived(int addr) { return bytesReceived[addr]; }
-	MyPacket* createGenericDataPackett(int seqNum);
 
 };
 

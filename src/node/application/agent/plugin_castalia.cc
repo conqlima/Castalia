@@ -67,10 +67,7 @@ extern "C"{
 
 // #define TEST_FRAGMENTATION 1
 
-// #define TEST_FRAGMENTATION 1
-
 Define_Module(Agent);
-
 
 unsigned int plugin_id = 1;
 
@@ -83,6 +80,10 @@ static unsigned long long port = 0;
 static intu8 *buffer = NULL;
 static int buffer_size = 0;
 static int buffer_retry = -1;
+
+static map<long,int> controlPackets;
+static map<long,int> measurementPackets;
+
 
 using namespace std;
 
@@ -134,12 +135,8 @@ static int network_castalia_wait_for_data(Context *ctx)
 
 	if (buffer_retry != 0) {
 		// there may be another APDU in buffer already
-		if (buffer_retry == -1){
+		if (buffer_retry == -1)
 			buffer_retry = buffer_retry + 1;
-			//return CASTALIA_ERROR_NONE;
-		}//else {
-			//return CASTALIA_ERROR_NONE;
-		//}
 	}else {
 		buffer_retry = -1;
 		return CASTALIA_ERROR;
@@ -147,273 +144,6 @@ static int network_castalia_wait_for_data(Context *ctx)
 
 	return CASTALIA_ERROR_NONE;
 }
-
-//static void message_type_ByteStreamReader(Context* ctx, ByteStreamReader *stream,  APDU *pointer, int *error, int apdu_size)
-//{
-	//unsigned int nodeId = (ctx->id.plugin+1) / 2;
-	//ByteStreamReader *streamTmp = byte_stream_reader_instance(stream->buffer_cur, apdu_size);
-	//pointer->choice = read_intu16(streamTmp, error);
-	//// APDU_choice choice
-	//pointer->length = read_intu16(streamTmp, error);
-	//pointer->length = read_intu16(streamTmp, error);
-	//// intu16 length
-
-	//switch (pointer->choice) {
-	//case AARQ_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Request";
-		////CHK(decode_aarq_apdu(stream, &pointer->u.aarq, error));
-		//break;
-	//case AARE_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Response";
-		////CHK(decode_aare_apdu(stream, &pointer->u.aare, error));
-		//break;
-	//case RLRQ_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Release Request";
-		////CHK(decode_rlrq_apdu(stream, &pointer->u.rlrq, error));
-		//break;
-	//case RLRE_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Release Response";
-		////CHK(decode_rlre_apdu(stream, &pointer->u.rlre, error));
-		//break;
-	//case ABRT_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Abort";
-		////CHK(decode_abrt_apdu(stream, &pointer->u.abrt, error));
-		//break;
-	//case PRST_CHOSEN:{
-		////CHK(decode_prst_apdu(stream, &pointer->u.prst, error));
-		//pointer->choice = read_intu16(streamTmp, error);
-		//pointer->choice = read_intu16(streamTmp, error);
-		//// APDU_choice choice
-		//switch (pointer->choice) {
-			//case ROIV_CMIP_EVENT_REPORT_CHOSEN:{
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//int dec;
-				//std::stringstream streamc;
-				//streamc << pointer->choice;
-				//streamc >> std::dec >> dec;
-				//if (dec == MDC_NOTI_CONFIG)
-				//st_msg[nodeId].send_str = "Configuration with no confirmation";
-				//else
-				//st_msg[nodeId].send_str = "Measurement with no confirmation";
-				//break;
-			//}
-			//case ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:{
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//int dec;
-				//std::stringstream streamc;
-				//streamc << pointer->choice;
-				//streamc >> std::dec >> dec;
-				//if (dec == MDC_NOTI_CONFIG)
-				//st_msg[nodeId].send_str = "Configuration with confirmation";
-				//else
-				//st_msg[nodeId].send_str = "Measurement with confirmation";
-				//break;
-			//}
-			//case ROIV_CMIP_GET_CHOSEN:
-				//st_msg[nodeId].send_str = "GET configuration with confirmation";
-				//break;
-			//case ROIV_CMIP_SET_CHOSEN:
-				//st_msg[nodeId].send_str = "SET configuration with no confirmation";
-				//break;
-			//case ROIV_CMIP_CONFIRMED_SET_CHOSEN:
-				//st_msg[nodeId].send_str = "SET configuration with confirmation";
-				//break;
-			//case ROIV_CMIP_ACTION_CHOSEN:
-				//st_msg[nodeId].send_str = "ACTION with no confirmation";
-				//break;
-			//case ROIV_CMIP_CONFIRMED_ACTION_CHOSEN:
-				//st_msg[nodeId].send_str = "ACTION with confirmation";
-				//break;
-			//case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:{
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//pointer->choice = read_intu16(streamTmp, error);
-				//int dec;
-				//std::stringstream streamc;
-				//streamc << pointer->choice;
-				//streamc >> std::dec >> dec;
-				//if (dec == MDC_NOTI_CONFIG)
-				//st_msg[nodeId].send_str = "response of a configuration with confirmation";
-				//else
-				//st_msg[nodeId].send_str = "response of a measurement with confirmation";
-				//break;
-			//}
-			//case RORS_CMIP_GET_CHOSEN:
-				//st_msg[nodeId].send_str = "response of a GET configuration";
-				//break;
-			//case RORS_CMIP_CONFIRMED_SET_CHOSEN:
-				//st_msg[nodeId].send_str = "response for a SET configuration with confirmation";
-				//break;
-			//case RORS_CMIP_CONFIRMED_ACTION_CHOSEN:
-				//st_msg[nodeId].send_str = "response of a ACTION with confirmation";
-				//break;
-			//case ROER_CHOSEN:
-				//st_msg[nodeId].send_str = "Remote Invoke Error";
-				//break;
-			//case RORJ_CHOSEN:
-				//st_msg[nodeId].send_str = "Remote Invoke Reject";
-				//break;
-			//default:
-				//st_msg[nodeId].send_str = "unknown data apdu choice";
-				////ERROR("unknown data apdu choice");
-				////goto fail;
-				//break;
-		//}
-			////EPILOGUE(data_apdu_message);
-				//break;
-	//}
-	//default:
-		//st_msg[nodeId].send_str = "unknown data apdu choice";
-		////ERROR("unknown apdu choice");
-		////goto fail;
-		//break;
-	//}
-	////EPILOGUE(apdu);
-//}
-
-//static void message_type_ByteStreamWriter(Context* ctx, ByteStreamWriter *stream, APDU *pointer, int *error, int size)
-//{
-	//unsigned int nodeId = (ctx->id.plugin+1) / 2;
-	//ByteStreamWriter *streamTmp = (ByteStreamWriter *) calloc(1, sizeof(ByteStreamWriter));
-	//streamTmp->buffer = (intu8 *) calloc(1, size * sizeof(intu8));
-	//streamTmp->buffer = stream->buffer;
-	//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-	//// APDU_choice choice
-	//pointer->length = read_intu16_ByteStreamWriter(streamTmp, error);
-	//pointer->length = read_intu16_ByteStreamWriter(streamTmp, error);
-	//// intu16 length
-	//switch (pointer->choice) {
-	//case AARQ_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Request";
-		////CHK(decode_aarq_apdu(stream, &pointer->u.aarq, error));
-		//break;
-	//case AARE_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Response";
-		////CHK(decode_aare_apdu(stream, &pointer->u.aare, error));
-		//break;
-	//case RLRQ_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Release Request";
-		////CHK(decode_rlrq_apdu(stream, &pointer->u.rlrq, error));
-		//break;
-	//case RLRE_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Release Response";
-		////CHK(decode_rlre_apdu(stream, &pointer->u.rlre, error));
-		//break;
-	//case ABRT_CHOSEN:
-		//st_msg[nodeId].send_str = "Association Abort";
-		////CHK(decode_abrt_apdu(stream, &pointer->u.abrt, error));
-		//break;
-	//case PRST_CHOSEN:{
-		////CHK(decode_prst_apdu(stream, &pointer->u.prst, error));
-		//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-		//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-		//// APDU_choice choice
-		//switch (pointer->choice) {
-			//case ROIV_CMIP_EVENT_REPORT_CHOSEN:{
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//int dec;
-				//std::stringstream streamc;
-				//streamc << pointer->choice;
-				//streamc >> std::dec >> dec;
-				//if (dec == MDC_NOTI_CONFIG)
-				//st_msg[nodeId].send_str = "Configuration with no confirmation";
-				//else
-				//st_msg[nodeId].send_str = "Measurement with no confirmation";
-				//break;
-			//}
-			//case ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:{
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//int dec;
-				//std::stringstream streamc;
-				//streamc << pointer->choice;
-				//streamc >> std::dec >> dec;
-				//if (dec == MDC_NOTI_CONFIG)
-				//st_msg[nodeId].send_str = "Configuration with confirmation";
-				//else
-				//st_msg[nodeId].send_str = "Measurement with confirmation";
-				//break;
-			//}
-			//case ROIV_CMIP_GET_CHOSEN:
-				//st_msg[nodeId].send_str = "GET configuration with confirmation";
-				//break;
-			//case ROIV_CMIP_SET_CHOSEN:
-				//st_msg[nodeId].send_str = "SET configuration with no confirmation";
-				//break;
-			//case ROIV_CMIP_CONFIRMED_SET_CHOSEN:
-				//st_msg[nodeId].send_str = "SET configuration with confirmation";
-				//break;
-			//case ROIV_CMIP_ACTION_CHOSEN:
-				//st_msg[nodeId].send_str = "ACTION with no confirmation";
-				//break;
-			//case ROIV_CMIP_CONFIRMED_ACTION_CHOSEN:
-				//st_msg[nodeId].send_str = "ACTION with confirmation";
-				//break;
-			//case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:{
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//pointer->choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//int dec;
-				//std::stringstream streamc;
-				//streamc << pointer->choice;
-				//streamc >> std::dec >> dec;
-				//if (dec == MDC_NOTI_CONFIG)
-				//st_msg[nodeId].send_str = "response of a configuration with confirmation";
-				//else
-				//st_msg[nodeId].send_str = "response of a measurement with confirmation";
-				//break;
-			//}
-			//case RORS_CMIP_GET_CHOSEN:
-				//st_msg[nodeId].send_str = "GET configuration";
-				//break;
-			//case RORS_CMIP_CONFIRMED_SET_CHOSEN:
-				//st_msg[nodeId].send_str = "response for a SET configuration with confirmation";
-				//break;
-			//case RORS_CMIP_CONFIRMED_ACTION_CHOSEN:
-				//st_msg[nodeId].send_str = "response of a ACTION with confirmation";
-				//break;
-			//case ROER_CHOSEN:
-				//st_msg[nodeId].send_str = "Remote Invoke Error";
-				//break;
-			//case RORJ_CHOSEN:
-				//st_msg[nodeId].send_str = "Remote Invoke Reject";
-				//break;
-			//default:
-				//st_msg[nodeId].send_str = "unknown data apdu choice";
-				////ERROR("unknown data apdu choice");
-				////goto fail;
-				//break;
-		//}
-			////EPILOGUE(data_apdu_message);
-				//break;
-	//}
-	//default:
-		//st_msg[nodeId].send_str = "unknown data apdu choice";
-		////ERROR("unknown apdu choice");
-		////goto fail;
-		//break;
-	//}
-	////EPILOGUE(apdu);
-//}
 
 static void message_type(intu8 * buffer, int size, Context* ctx){
 	unsigned int nodeId = (ctx->id.plugin+1) / 2;
@@ -426,154 +156,128 @@ static void message_type(intu8 * buffer, int size, Context* ctx){
 	
 	switch (choice) {
 	case AARQ_CHOSEN:
-		st_msg[nodeId].send_str = "Association Request";
-		st_msg[nodeId].fila.push("Association Request");
-		//CHK(decode_aarq_apdu(stream, &pointer->u.aarq, error));
+		st_msg[nodeId].msgType.push("Association Request");
+		controlPackets[nodeId]++;
 		break;
 	case AARE_CHOSEN:
-		st_msg[nodeId].send_str = "Association Response";
-		st_msg[nodeId].fila.push("Association Response");
-		//CHK(decode_aare_apdu(stream, &pointer->u.aare, error));
+		st_msg[nodeId].msgType.push("Association Response");
+		controlPackets[nodeId]++;
 		break;
 	case RLRQ_CHOSEN:
-		st_msg[nodeId].send_str = "Association Release Request";
-		st_msg[nodeId].fila.push("Association Release Request");
-		//CHK(decode_rlrq_apdu(stream, &pointer->u.rlrq, error));
+		st_msg[nodeId].msgType.push("Association Release Request");
+		controlPackets[nodeId]++;
 		break;
 	case RLRE_CHOSEN:
-		st_msg[nodeId].send_str = "Association Release Response";
-		st_msg[nodeId].fila.push("Association Release Response");
-		//CHK(decode_rlre_apdu(stream, &pointer->u.rlre, error));
+		st_msg[nodeId].msgType.push("Association Release Response");
+		controlPackets[nodeId]++;
 		break;
 	case ABRT_CHOSEN:
-		st_msg[nodeId].send_str = "Association Abort";
-		st_msg[nodeId].fila.push("Association Abort");
-		//CHK(decode_abrt_apdu(stream, &pointer->u.abrt, error));
+		st_msg[nodeId].msgType.push("Association Abort");
+		controlPackets[nodeId]++;
 		break;
 	case PRST_CHOSEN:{
 		choice = ntohs(*((uint16_t *) bufferTmp));
-		//CHK(decode_prst_apdu(stream, &pointer->u.prst, error));
-		//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-		//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-		// APDU_choice choice
+
 		switch (choice) {
 			case ROIV_CMIP_EVENT_REPORT_CHOSEN:{
-				bufferTmp += 10;
-				choice = ntohs(*((uint16_t *) bufferTmp));
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				int dec;
-				std::stringstream streamc;
-				streamc << choice;
-				streamc >> std::dec >> dec;
-				if (dec == MDC_NOTI_CONFIG){
-				st_msg[nodeId].send_str = "Configuration with no confirmation";
-				st_msg[nodeId].fila.push("Configuration with no confirmation");
-				}else{
-				st_msg[nodeId].send_str = "Measurement with no confirmation";
-				st_msg[nodeId].fila.push("Measurement with no confirmation");
-				}
+				/*uncomment if you want event type*/
+				//bufferTmp += 10;
+				//choice = ntohs(*((uint16_t *) bufferTmp));
+				//int dec;
+				//std::stringstream streamc;
+				//streamc << choice;
+				//streamc >> std::dec >> dec;
+				//if (dec == MDC_NOTI_CONFIG){
+				//st_msg[nodeId].msgType.push("Configuration with no confirmation");
+				//}else{
+				//st_msg[nodeId].msgType.push("Measurement with no confirmation");
+				//}
+				st_msg[nodeId].msgType.push("Measurement with no confirmation");
+				measurementPackets[nodeId]++;
 				break;
 			}
 			case ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:{
-				bufferTmp += 10;
-				choice = ntohs(*((uint16_t *) bufferTmp));
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				int dec;
-				std::stringstream streamc;
-				streamc << choice;
-				streamc >> std::dec >> dec;
-				if (dec == MDC_NOTI_CONFIG){
-				st_msg[nodeId].send_str = "Configuration with confirmation";
-				st_msg[nodeId].fila.push("Configuration with confirmation");
-				}else{
-				st_msg[nodeId].send_str = "Measurement with confirmation";
-				st_msg[nodeId].fila.push("Measurement with confirmation");
-				}
+				/*uncomment if you want event type*/
+				//bufferTmp += 10;
+				//choice = ntohs(*((uint16_t *) bufferTmp));
+				//int dec;
+				//std::stringstream streamc;
+				//streamc << choice;
+				//streamc >> std::dec >> dec;
+				//if (dec == MDC_NOTI_CONFIG){
+				//st_msg[nodeId].msgType.push("Configuration with confirmation");
+				//}else{
+				//st_msg[nodeId].msgType.push("Measurement with confirmation");
+				//}
+				st_msg[nodeId].msgType.push("Measurement with confirmation");
+				measurementPackets[nodeId]++;
 				break;
 			}
 			case ROIV_CMIP_GET_CHOSEN:
-				st_msg[nodeId].send_str = "GET configuration with confirmation";
-				st_msg[nodeId].fila.push("GET configuration with confirmation");
+				st_msg[nodeId].msgType.push("GET configuration with confirmation");
+				controlPackets[nodeId]++;
 				break;
 			case ROIV_CMIP_SET_CHOSEN:
-				st_msg[nodeId].send_str = "SET configuration with no confirmation";
-				st_msg[nodeId].fila.push("SET configuration with no confirmation");
+				st_msg[nodeId].msgType.push("SET configuration with no confirmation");
+				controlPackets[nodeId]++;
 				break;
 			case ROIV_CMIP_CONFIRMED_SET_CHOSEN:
-				st_msg[nodeId].send_str = "SET configuration with confirmation";
-				st_msg[nodeId].fila.push("SET configuration with confirmation");
+				st_msg[nodeId].msgType.push("SET configuration with confirmation");
+				controlPackets[nodeId]++;
 				break;
 			case ROIV_CMIP_ACTION_CHOSEN:
-				st_msg[nodeId].send_str = "ACTION with no confirmation";
-				st_msg[nodeId].fila.push("ACTION with no confirmation");
+				st_msg[nodeId].msgType.push("ACTION with no confirmation");
+				controlPackets[nodeId]++;
 				break;
 			case ROIV_CMIP_CONFIRMED_ACTION_CHOSEN:
-				st_msg[nodeId].send_str = "ACTION with confirmation";
-				st_msg[nodeId].fila.push("ACTION with confirmation");
+				st_msg[nodeId].msgType.push("ACTION with confirmation");
+				controlPackets[nodeId]++;
 				break;
 			case RORS_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN:{
-				bufferTmp += 10;
-				choice = ntohs(*((uint16_t *) bufferTmp));
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				//choice = read_intu16_ByteStreamWriter(streamTmp, error);
-				int dec;
-				std::stringstream streamc;
-				streamc << choice;
-				streamc >> std::dec >> dec;
-				if (dec == MDC_NOTI_CONFIG){
-				st_msg[nodeId].send_str = "response of a configuration with confirmation";
-				st_msg[nodeId].fila.push("response of a configuration with confirmation");
-				}else{
-				st_msg[nodeId].send_str = "response of a measurement with confirmation";
-				st_msg[nodeId].fila.push("response of a measurement with confirmation");
-				}
+				/*uncomment if you want event type*/
+				//bufferTmp += 10;
+				//choice = ntohs(*((uint16_t *) bufferTmp));
+				//int dec;
+				//std::stringstream streamc;
+				//streamc << choice;
+				//streamc >> std::dec >> dec;
+				//if (dec == MDC_NOTI_CONFIG){
+				//st_msg[nodeId].msgType.push("response of a configuration with confirmation");
+				//}else{
+				//st_msg[nodeId].msgType.push("response of a measurement with confirmation");
+				//}
+				st_msg[nodeId].msgType.push("response of a measurement with confirmation");
+				controlPackets[nodeId]++;
 				break;
 			}
 			case RORS_CMIP_GET_CHOSEN:
-				st_msg[nodeId].send_str = "GET configuration";
-				st_msg[nodeId].fila.push("response of a GET configuration");
+				st_msg[nodeId].msgType.push("response of a GET configuration");
+				controlPackets[nodeId]++;
 				break;
 			case RORS_CMIP_CONFIRMED_SET_CHOSEN:
-				st_msg[nodeId].send_str = "response for a SET configuration with confirmation";
-				st_msg[nodeId].fila.push("response for a SET configuration with confirmation");
+				st_msg[nodeId].msgType.push("response for a SET configuration with confirmation");
+				controlPackets[nodeId]++;
 				break;
 			case RORS_CMIP_CONFIRMED_ACTION_CHOSEN:
-				st_msg[nodeId].send_str = "response of a ACTION with confirmation";
-				st_msg[nodeId].fila.push("response of a ACTION with confirmation");
+				st_msg[nodeId].msgType.push("response of a ACTION with confirmation");
+				controlPackets[nodeId]++;
 				break;
 			case ROER_CHOSEN:
-				st_msg[nodeId].send_str = "Remote Invoke Error";
-				st_msg[nodeId].fila.push("Remote Invoke Error");
+				st_msg[nodeId].msgType.push("Remote Invoke Error");
+				controlPackets[nodeId]++;
 				break;
 			case RORJ_CHOSEN:
-				st_msg[nodeId].send_str = "Remote Invoke Reject";
-				st_msg[nodeId].fila.push("Remote Invoke Reject");
+				st_msg[nodeId].msgType.push("Remote Invoke Reject");
+				controlPackets[nodeId]++;
 				break;
 			default:
-				st_msg[nodeId].send_str = "unknown data apdu choice";
-				st_msg[nodeId].fila.push("unknown data apdu choice");
-				//ERROR("unknown data apdu choice");
-				//goto fail;
+				st_msg[nodeId].msgType.push("unknown data apdu choice");
 				break;
 		}
-			//EPILOGUE(data_apdu_message);
 				break;
 	}
 	default:
-		st_msg[nodeId].send_str = "unknown data apdu choice";
-		//ERROR("unknown apdu choice");
-		//goto fail;
+		st_msg[nodeId].msgType.push("unknown data apdu choice");
 		break;
 	}
 }
@@ -603,10 +307,13 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		/*Transfere dados de st_msg para localbuf*/
 		for (i = 0; i < st_msg[nodeId].tam_buff; i++)
 		{
-			localbuf[i] = st_msg[nodeId].buff_msg[i];
+			localbuf[i] = st_msg[nodeId].buff_msgRep[i];
 		}
 		
 		int bytes_read = st_msg[nodeId].tam_buff;
+		//free(st_msg[nodeId].buff_msg);
+		//st_msg[nodeId].buff_msg = NULL;
+		st_msg[nodeId].buff_msgRep.clear();
 		st_msg[nodeId].tam_buff = 0;
 
 		if (bytes_read < 0) {
@@ -664,9 +371,7 @@ static ByteStreamReader *network_get_apdu_stream(Context *ctx)
 		buffer = (intu8*) malloc(buffer_size);
 		memcpy(buffer, stream->buffer_cur + apdu_size, buffer_size);
 	}
-	//int error = 0;
-	//APDU apdu;
-	//message_type_ByteStreamReader(ctx, stream, &apdu, &error, apdu_size);
+	
 	message_type(stream->buffer, apdu_size, ctx);
 	DEBUG(" network:CASTALIA APDU received ");
 	ioutil_print_buffer(stream->buffer_cur, apdu_size);
@@ -691,7 +396,6 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 #ifdef TEST_FRAGMENTATION
 		to_send = to_send > 50 ? 50 : to_send;
 #endif
-		//int ret = write(sk, stream->buffer + written, to_send);
 		int ret = stream->size;
 		DEBUG(" network:CASTALIA sent %d bytes", to_send);
 
@@ -706,27 +410,24 @@ static int network_send_apdu_stream(Context *ctx, ByteStreamWriter *stream)
 	if ((stream->size) > 0){
 		unsigned int i;
 		
-		/*Copia conteúdo de stream->buffer para m_st_msg*/
+		//if (!st_msg[nodeId].buff_msg)
+		//st_msg[nodeId].buff_msg = (streamOfByte) malloc((stream->size + st_msg[nodeId].tam_buff)*sizeof(uint8_t));
+		//else
+		//st_msg[nodeId].buff_msg = (streamOfByte) realloc(st_msg[nodeId].buff_msg, sizeof(uint8_t)*(stream->size + st_msg[nodeId].tam_buff));
+		
+		/*Copia conteúdo de stream->buffer para st_msg*/
 		for (i = 0; i < stream->size; i++) {
-			st_msg[nodeId].buff_msg[i+st_msg[nodeId].tam_buff] = stream->buffer[i];
+			st_msg[nodeId].buff_msgSed.push_back(stream->buffer[i]);
+			//st_msg[nodeId].buff_msg[i+st_msg[nodeId].tam_buff] = stream->buffer[i];
 			//sprintf(str, "%s%.2X ", str, stream->buffer[i]);
 		}
 		
 		/*Caso o pacote tenha duas mensagens, o tamanho do pacote
 		 * deve ser o tamanho da msg1 + msg2 + ...*/
 		st_msg[nodeId].tam_buff += stream->size;
-		
-		/*limpa o restanto do pacote*/
-		//for (int i = st_msg[ctx->id.plugin].tam_buff; i < 65535; i++) {
-		for (int i = st_msg[nodeId].tam_buff; i < 65535; i++) {
-			st_msg[nodeId].buff_msg[i] = '\0';
-		}
 
 	}
 	
-	//int error = 0;
-	//APDU apdu;
-	//message_type_ByteStreamWriter(ctx, stream, &apdu, &error, stream->size);
 	message_type(stream->buffer, stream->size, ctx);
 	DEBUG(" network:CASTALIA APDU sent ");
 	ioutil_print_buffer(stream->buffer, stream->size);
@@ -783,6 +484,17 @@ int plugin_network_castalia_agent_setup(CommunicationPlugin *plugin, int pport)
 	return CASTALIA_ERROR_NONE;
 }
 
-
+int getControlPacketsTotal(int addr){return controlPackets[addr];}
+int getMeasurementPacketsTotal(int addr){return measurementPackets[addr];}
+void clearVarMap(void){
+	static int control = 0;
+	/*clean up the control var every 5 initialization*/
+	if ((control % 5) == 0){
+	controlPackets.clear();
+	measurementPackets.clear();
+	control = 0;
+	}
+	control++;
+}
 
 /** @} */

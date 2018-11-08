@@ -17,48 +17,24 @@
 
 // cplusplus {{
 #include "ApplicationPacket_m.h"
-#include <string>
-#include <queue>
-#include <stack>
-
-typedef std::queue<const char*> TypeMsg;
-
-extern "C" {
-#include "communication/plugin/plugin.h"
-#include "util/bytelib.h"
-#include "asn1/phd_types.h"
-}
 // }}
 
 /**
- * Struct generated from src/node/application/MyPacket.msg:20 by nedtool.
- */
-struct Tmsg
-{
-    Tmsg();
-    TypeMsg fila;
-    opp_string send_str;
-    opp_string recv_str;
-    uint8_t buff_msg[65535];
-    int tam_buff;
-};
-
-void doPacking(cCommBuffer *b, Tmsg& a);
-void doUnpacking(cCommBuffer *b, Tmsg& a);
-
-/**
- * Class generated from <tt>src/node/application/MyPacket.msg:28</tt> by nedtool.
+ * Class generated from <tt>src/node/application/MyPacket.msg:7</tt> by nedtool.
  * <pre>
  * packet MyPacket extends ApplicationPacket
  * {
- *     Tmsg extraData;
+ *     uint8_t buff[];
+ *     int tam_buff;
  * }
  * </pre>
  */
 class MyPacket : public ::ApplicationPacket
 {
   protected:
-    Tmsg extraData_var;
+    uint8_t *buff_var; // array ptr
+    unsigned int buff_arraysize;
+    int tam_buff_var;
 
   private:
     void copy(const MyPacket& other);
@@ -77,9 +53,12 @@ class MyPacket : public ::ApplicationPacket
     virtual void parsimUnpack(cCommBuffer *b);
 
     // field getter/setter methods
-    virtual Tmsg& getExtraData();
-    virtual const Tmsg& getExtraData() const {return const_cast<MyPacket*>(this)->getExtraData();}
-    virtual void setExtraData(const Tmsg& extraData);
+    virtual void setBuffArraySize(unsigned int size);
+    virtual unsigned int getBuffArraySize() const;
+    virtual uint8_t getBuff(unsigned int k) const;
+    virtual void setBuff(unsigned int k, uint8_t buff);
+    virtual int getTam_buff() const;
+    virtual void setTam_buff(int tam_buff);
 };
 
 inline void doPacking(cCommBuffer *b, MyPacket& obj) {obj.parsimPack(b);}
