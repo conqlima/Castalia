@@ -45,16 +45,11 @@ Define_Module(Manager);
 ContextId m_CONTEXT_ID = {2, 0};
 
 /**
- * PLugin definition
- */
-//CommunicationPlugin m_comm_plugin[6] = {COMMUNICATION_PLUGIN_NULL};
-//CommunicationPlugin m_comm_plugin[6] = {COMMUNICATION_PLUGIN_NULL};
-
-/**
  *  Variable used by the stack
  */
 unsigned long long m_port = 0;
 
+static map<long,int> first_association;
 
 /**
  * Callback function that is called whenever a device
@@ -113,8 +108,12 @@ void device_associated(Context *ctx, DataList *list)
 		fflush(stderr);
 		free(data);
 	}
-
+	/*MDS attibutes is just needed in the first
+	 * association*/
+	if (first_association[ctx->id.plugin] == 0){
 	device_reqmdsattr();
+	first_association[ctx->id.plugin]++;
+	}
 }
 
 /**
@@ -181,6 +180,7 @@ void m_castalia_mode(unsigned int my_plugin_number)
 	m_CONTEXT_ID.plugin = 2;
 	m_CONTEXT_ID.connid = m_port;
 	m_plugin_network_castalia_manager_setup(&m_comm_plugin[my_plugin_number/2], m_port);
+	first_association.clear();
 }
 
 

@@ -58,7 +58,9 @@ void Agent::startup()
 			opt = 3;
 	} else if (!(strcmp(application_name.c_str(), "glucometer"))) {
 			opt = 4;
-	} else {
+	}else if (!(strcmp(application_name.c_str(), "thermometer"))) {
+			opt = 5;
+	}else {
 		throw cRuntimeError("Invalid application name in node %s", SELF_NETWORK_ADDRESS);
 	}
 	
@@ -99,6 +101,10 @@ void Agent::startup()
 		fprintf(stderr, "Starting Glucometer Agent\n");
 		event_report_cb = glucometer_event_report_cb;
 		specialization = 0x06A4;
+	} else if (opt == 5) { /* Thermometer */
+		fprintf(stderr, "Starting Thermometer Agent\n");
+		event_report_cb = thermometer_event_report_cb;
+		specialization = 0x0320;
 	} else { /* Default Pulse Oximeter */
 		fprintf(stderr, "Starting Pulse Oximeter Agent\n");
 		event_report_cb = oximeter_event_report_cb;
@@ -214,9 +220,9 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 				CONTEXT_ID = {my_plugin_number, 0};
 				ctx = context_get_and_lock(CONTEXT_ID);
 				
+				st_msg[nodeNumber].buff_msgSed.clear();
 				/*verifica se no pacote recebido existe dados*/
 				if (st_msg[nodeNumber].tam_buff > 0) {
-					st_msg[nodeNumber].buff_msgSed.clear();
 					/*receive all the messages in received packet*/
 					while((communication_wait_for_data_input(ctx)) == (NETWORK_ERROR_NONE)) {
 						communication_read_input_stream(ctx->id);
@@ -247,9 +253,26 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 						agent_disconnect(CONTEXT_ID);
 						--alarmt;
 				}else{//associantion abort received
-				cancelTimer(SEND_PACKET);
-				cancelTimer(TO_ASSOC);
-				cancelTimer(TO_OPERA);
+				//cancelTimer(SEND_PACKET);
+				//cancelTimer(TO_ASSOC);
+				//cancelTimer(TO_OPERA);
+				if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating)  && alarmt > 0){
+				//if ((ctx->fsm->state == fsm_state_unassociated)  && alarmt > 0){
+					if (getTimer(SEND_PACKET) != 0)
+					alarmt++;
+					
+					cancelTimer(SEND_PACKET);
+					cancelTimer(TO_ASSOC);
+					cancelTimer(TO_OPERA);
+					agent_request_association_abort(CONTEXT_ID);
+					st_msg[nodeNumber].tam_buff = 0;
+					st_msg[nodeNumber].buff_msgSed.clear();
+					st_msg[nodeNumber].msgType.pop();
+					dataSN++;
+					service_init(ctx);
+					agent_associate(CONTEXT_ID);
+					setTimer(SEND_PACKET, 0);
+				}
 				}
 				
 				context_unlock(ctx);
@@ -371,6 +394,18 @@ void Agent::timerFiredCallback(int index)
 				}
 				toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
 				packetsSent[recipientId]++;
+				
+				if (alarmt > 0){
+				cancelTimer(SEND_PACKET);
+				cancelTimer(TO_ASSOC);
+				cancelTimer(TO_OPERA);
+				st_msg[nodeNumber].tam_buff = 0;
+				st_msg[nodeNumber].buff_msgSed.clear();
+				dataSN++;
+				service_init(ctx);
+				agent_associate(CONTEXT_ID);
+				setTimer(SEND_PACKET, 0);
+				}
 			break;
 		}
 	}

@@ -41,6 +41,7 @@ extern "C" {
 #include "specializations/blood_pressure_monitor.h"
 #include "specializations/weighing_scale.h"
 #include "specializations/glucometer.h"
+#include "specializations/thermometer.h"
 #include "agent.h"
 }
 #include "sample_agent_common.h"
@@ -152,6 +153,33 @@ void *glucometer_event_report_cb()
 	localtime_r(&now, &nowtm);
 
 	data->capillary_whole_blood = 10.2 + random() % 20;
+
+	data->century = nowtm.tm_year / 100 + 19;
+	data->year = nowtm.tm_year % 100;
+	data->month = nowtm.tm_mon + 1;
+	data->day = nowtm.tm_mday;
+	data->hour = nowtm.tm_hour;
+	data->minute = nowtm.tm_min;
+	data->second = nowtm.tm_sec;
+	data->sec_fractions = 50;
+
+	return data;
+}
+
+/**
+ * Generate data for Glucometer event report
+ */
+void *thermometer_event_report_cb()
+{
+	time_t now;
+	struct tm nowtm;
+	struct thermometer_event_report_data* data =
+		(thermometer_event_report_data*) malloc(sizeof(struct thermometer_event_report_data));
+
+	time(&now);
+	localtime_r(&now, &nowtm);
+
+	data->temperature = 36.5 + random() % 5;
 
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;

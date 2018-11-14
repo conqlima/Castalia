@@ -175,7 +175,10 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 							m_st_msg[sourceId].msgType.pop();
 					}
 					context_unlock(m_ctx);
-
+					
+					if(m_ctx->fsm->state == fsm_state_unassociated)
+					cancelTimer(sourceId);
+					
 					if (m_SETTIMER[sourceId]) {
 					setTimer(sourceId, 3);
 					m_SETTIMER[sourceId] = 0;
