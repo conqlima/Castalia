@@ -19,6 +19,11 @@ extern "C" {
 #include "communication/communication.h"
 #include "communication/context_manager.h"
 #include "communication/context.h"
+#include "specializations/pulse_oximeter.h"
+#include "specializations/blood_pressure_monitor.h"
+#include "specializations/weighing_scale.h"
+#include "specializations/glucometer.h"
+#include "specializations/thermometer.h"
 #include "ieee11073.h"
 #include "agent.h"
 }
@@ -51,6 +56,7 @@ class Agent : public VirtualApplication {
 	int total_sec;
 	int RC;
 	int numNodes;
+	bool confirmed_event;
 	unsigned int my_plugin_number;
 	unsigned int opt;
 	unsigned int nodeNumber;

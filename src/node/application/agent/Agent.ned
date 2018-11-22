@@ -11,6 +11,7 @@ simple Agent like node.application.iApplication
 		string application_type = default("pulseoximeter"); // agent types
 		double reading_rate = default(4);
 		string time_limit = default("");
+		bool confirmed_event = default(false);
 		
 		
 		//copied from ThroughputTest.ned

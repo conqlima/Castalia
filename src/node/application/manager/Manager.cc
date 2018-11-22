@@ -174,7 +174,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 							trace() << "type: " << m_st_msg[sourceId].msgType.front();
 							m_st_msg[sourceId].msgType.pop();
 					}
-					context_unlock(m_ctx);
+					
 					
 					if(m_ctx->fsm->state == fsm_state_unassociated)
 					cancelTimer(sourceId);
@@ -185,6 +185,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					}
 					
 					if (m_st_msg[sourceId].tam_buff > 0) {
+						
 						dataSN[sourceId]++;
 						trace() << "Sending packet #" << dataSN[sourceId] << " to node " << sourceId;//sequence number
 						while(!m_st_msg[sourceId].msgType.empty()){
@@ -194,6 +195,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 						toNetworkLayer(createDataPacket(dataSN[sourceId]), source);
 						packetsSent[recipientId]++;
 					}
+					context_unlock(m_ctx);
 				}
 			}else {
 				trace() << "Packet #" << sequenceNumber << " from node " << source <<

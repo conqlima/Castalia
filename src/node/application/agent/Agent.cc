@@ -13,6 +13,7 @@ int HUBNODE = 0;
 void Agent::startup()
 {
 	HUBNODE = par("hubNode");
+	confirmed_event = par("confirmed_event");
 	packet_rate = par("packet_rate");
 	packet_rate = par("packet_rate");
 	recipientAddress = par("nextRecipient").stringValue();//endereço em string
@@ -93,23 +94,33 @@ void Agent::startup()
 		fprintf(stderr, "Starting Blood Pressure Agent\n");
 		event_report_cb = blood_pressure_event_report_cb;
 		specialization = 0x02BC;
+		if (confirmed_event)
+		event_conf_or_unconf_blood_pressure = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	} else if (opt == 3) { /* Weight Scale */
 		fprintf(stderr, "Starting Weight Scale Agent\n");
 		event_report_cb = weightscale_event_report_cb;
 		specialization = 0x05DC;
+		if (confirmed_event)
+		event_conf_or_unconf_weighting_scale = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	} else if (opt == 4) { /* Glucometer */
 		fprintf(stderr, "Starting Glucometer Agent\n");
 		event_report_cb = glucometer_event_report_cb;
 		specialization = 0x06A4;
+		if (confirmed_event)
+		event_conf_or_unconf_glucometer = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	} else if (opt == 5) { /* Thermometer */
 		fprintf(stderr, "Starting Thermometer Agent\n");
 		event_report_cb = thermometer_event_report_cb;
 		specialization = 0x0320;
+		if (confirmed_event)
+		event_conf_or_unconf_thermometer = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	} else { /* Default Pulse Oximeter */
 		fprintf(stderr, "Starting Pulse Oximeter Agent\n");
 		event_report_cb = oximeter_event_report_cb;
 		// change to 0x0191 if you want timestamps
 		specialization = 0x0190;
+		if (confirmed_event)
+		event_conf_or_unconf_pulse_oximeter = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	}
 	
 	/*Initializes each plugin*/
@@ -233,47 +244,50 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					trace() << "Packet of size 0";
 				}
 				
+				dataSN++;
+				setTimer(SEND_PACKET, 0);
+				
 				/*Checks if agent can send measurements*/
-				if (ctx->fsm->state == fsm_state_operating && alarmt > 0) {
-					agent_send_data(CONTEXT_ID);
-					dataSN++;
+				//if (ctx->fsm->state == fsm_state_operating && alarmt > 0) {
+					//agent_send_data(CONTEXT_ID);
+					//dataSN++;
 					
-					if (alarmt == (int)((total_sec*reading_rate)))
-					setTimer(SEND_PACKET, 0);// the first measurement
-					else
-					setTimer(SEND_PACKET, data_spacing);
+					//if (alarmt == (int)((total_sec*reading_rate)))
+					//setTimer(SEND_PACKET, 0);// the first measurement
+					//else
+					//setTimer(SEND_PACKET, data_spacing);
 					
-					--alarmt;
-				}else if (alarmt == 0) {
-						agent_request_association_release(CONTEXT_ID);
-						--alarmt;
-						dataSN++;
-						setTimer(SEND_PACKET, 0);
-				}else if (alarmt == -1) {
-						agent_disconnect(CONTEXT_ID);
-						--alarmt;
-				}else{//associantion abort received
-				//cancelTimer(SEND_PACKET);
-				//cancelTimer(TO_ASSOC);
-				//cancelTimer(TO_OPERA);
-				if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating)  && alarmt > 0){
-				//if ((ctx->fsm->state == fsm_state_unassociated)  && alarmt > 0){
-					if (getTimer(SEND_PACKET) != 0)
-					alarmt++;
+					//--alarmt;
+				//}else if (alarmt == 0) {
+						//agent_request_association_release(CONTEXT_ID);
+						//--alarmt;
+						//dataSN++;
+						//setTimer(SEND_PACKET, 0);
+				//}else if (alarmt == -1) {
+						//agent_disconnect(CONTEXT_ID);
+						//--alarmt;
+				//}else{//associantion abort received
+				////cancelTimer(SEND_PACKET);
+				////cancelTimer(TO_ASSOC);
+				////cancelTimer(TO_OPERA);
+				//if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating)  && alarmt > 0){
+				////if ((ctx->fsm->state == fsm_state_unassociated)  && alarmt > 0){
+					//if (getTimer(SEND_PACKET) != 0)
+					//alarmt++;
 					
-					cancelTimer(SEND_PACKET);
-					cancelTimer(TO_ASSOC);
-					cancelTimer(TO_OPERA);
-					agent_request_association_abort(CONTEXT_ID);
-					st_msg[nodeNumber].tam_buff = 0;
-					st_msg[nodeNumber].buff_msgSed.clear();
-					st_msg[nodeNumber].msgType.pop();
-					dataSN++;
-					service_init(ctx);
-					agent_associate(CONTEXT_ID);
-					setTimer(SEND_PACKET, 0);
-				}
-				}
+					//cancelTimer(SEND_PACKET);
+					//cancelTimer(TO_ASSOC);
+					//cancelTimer(TO_OPERA);
+					//agent_request_association_abort(CONTEXT_ID);
+					//st_msg[nodeNumber].tam_buff = 0;
+					//st_msg[nodeNumber].buff_msgSed.clear();
+					//st_msg[nodeNumber].msgType.pop();
+					//dataSN++;
+					//service_init(ctx);
+					//agent_associate(CONTEXT_ID);
+					//setTimer(SEND_PACKET, 0);
+				//}
+				//}
 				
 				context_unlock(ctx);
 				
