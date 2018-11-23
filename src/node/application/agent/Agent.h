@@ -24,6 +24,7 @@ extern "C" {
 #include "specializations/weighing_scale.h"
 #include "specializations/glucometer.h"
 #include "specializations/thermometer.h"
+#include "specializations/basic_ECG.h"
 #include "ieee11073.h"
 #include "agent.h"
 }

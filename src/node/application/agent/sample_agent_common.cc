@@ -42,9 +42,11 @@ extern "C" {
 #include "specializations/weighing_scale.h"
 #include "specializations/glucometer.h"
 #include "specializations/thermometer.h"
+#include "specializations/basic_ECG.h"
 #include "agent.h"
 }
 #include "sample_agent_common.h"
+#include <fstream>
 
 intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 					0xbb, 0xdd, 0xff};
@@ -167,7 +169,7 @@ void *glucometer_event_report_cb()
 }
 
 /**
- * Generate data for Glucometer event report
+ * Generate data for Thermometer event report
  */
 void *thermometer_event_report_cb()
 {
@@ -181,6 +183,37 @@ void *thermometer_event_report_cb()
 
 	data->temperature = 36.5 + random() % 5;
 
+	data->century = nowtm.tm_year / 100 + 19;
+	data->year = nowtm.tm_year % 100;
+	data->month = nowtm.tm_mon + 1;
+	data->day = nowtm.tm_mday;
+	data->hour = nowtm.tm_hour;
+	data->minute = nowtm.tm_min;
+	data->second = nowtm.tm_sec;
+	data->sec_fractions = 50;
+
+	return data;
+}
+
+/**
+ * Generate data for Basic ECG event report
+ */
+void *basic_ECG_event_report_cb()
+{
+	time_t now;
+	struct tm nowtm;
+	struct basic_ECG_event_report_data* data =
+		(basic_ECG_event_report_data*) malloc(sizeof(struct basic_ECG_event_report_data));
+
+	time(&now);
+	localtime_r(&now, &nowtm);
+	std::ifstream file("mV.txt");
+	for (int i = 0; i < 20; i++)
+	{
+		if (!(file >> data->mV[i])) {
+	      break;
+	    }
+	}
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;
 	data->month = nowtm.tm_mon + 1;

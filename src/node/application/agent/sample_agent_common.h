@@ -10,12 +10,12 @@ extern intu8 AGENT_SYSTEM_ID_VALUE[];
 //extern ContextId CONTEXT_ID;
 //extern CommunicationPlugin comm_plugin;
 
-
 void *oximeter_event_report_cb();
 void *blood_pressure_event_report_cb();
 void *weightscale_event_report_cb();
 void *glucometer_event_report_cb();
 void *thermometer_event_report_cb();
+void *basic_ECG_event_report_cb();
 
 //void timer_reset_timeout(Context *ctx);
 //int timer_count_timeout(Context *ctx);

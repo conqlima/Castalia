@@ -61,6 +61,8 @@ void Agent::startup()
 			opt = 4;
 	}else if (!(strcmp(application_name.c_str(), "thermometer"))) {
 			opt = 5;
+	}else if (!(strcmp(application_name.c_str(), "basicECG"))) {
+			opt = 6;
 	}else {
 		throw cRuntimeError("Invalid application name in node %s", SELF_NETWORK_ADDRESS);
 	}
@@ -114,7 +116,13 @@ void Agent::startup()
 		specialization = 0x0320;
 		if (confirmed_event)
 		event_conf_or_unconf_thermometer = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
-	} else { /* Default Pulse Oximeter */
+	}else if (opt == 6) { /* basic ECG */
+		fprintf(stderr, "Starting Basic ECG Agent\n");
+		event_report_cb = basic_ECG_event_report_cb;
+		specialization = 0x0258;
+		if (confirmed_event)
+		event_conf_or_unconf_basic_ecg = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
+	}else { /* Default Pulse Oximeter */
 		fprintf(stderr, "Starting Pulse Oximeter Agent\n");
 		event_report_cb = oximeter_event_report_cb;
 		// change to 0x0191 if you want timestamps
