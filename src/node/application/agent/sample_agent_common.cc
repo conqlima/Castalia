@@ -47,6 +47,8 @@ extern "C" {
 }
 #include "sample_agent_common.h"
 #include <fstream>
+#include <sstream>
+#include <string>
 
 intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 					0xbb, 0xdd, 0xff};
@@ -207,12 +209,22 @@ void *basic_ECG_event_report_cb()
 
 	time(&now);
 	localtime_r(&now, &nowtm);
-	std::ifstream file("mV.txt");
-	for (int i = 0; i < 20; i++)
+	std::ifstream filemV ("mv");
+	double R;
+	int i = 0;
+	std::string line;
+	while(std::getline(filemV, line))
 	{
-		if (!(file >> data->mV[i])) {
+		std::istringstream iss(line);
+		if (!(iss >> R)){ // error
 	      break;
 	    }
+	    float M = (2.0-(-2.0))/(800-0);
+	    float B = 2-(M*800);
+	    int X = (int)((R - B) / M);
+	    data->mV[i] = X;
+	    i++;
+	    if (i > 20) break;
 	}
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;

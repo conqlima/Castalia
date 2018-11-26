@@ -119,7 +119,8 @@ void Agent::startup()
 	}else if (opt == 6) { /* basic ECG */
 		fprintf(stderr, "Starting Basic ECG Agent\n");
 		event_report_cb = basic_ECG_event_report_cb;
-		specialization = 0x0258;
+		//specialization = 0x0258;
+		specialization = 0x4000;
 		if (confirmed_event)
 		event_conf_or_unconf_basic_ecg = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	}else { /* Default Pulse Oximeter */
@@ -256,46 +257,46 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 				setTimer(SEND_PACKET, 0);
 				
 				/*Checks if agent can send measurements*/
-				//if (ctx->fsm->state == fsm_state_operating && alarmt > 0) {
-					//agent_send_data(CONTEXT_ID);
-					//dataSN++;
+				if (ctx->fsm->state == fsm_state_operating && alarmt > 0) {
+					agent_send_data(CONTEXT_ID);
+					dataSN++;
 					
-					//if (alarmt == (int)((total_sec*reading_rate)))
-					//setTimer(SEND_PACKET, 0);// the first measurement
-					//else
-					//setTimer(SEND_PACKET, data_spacing);
+					if (alarmt == (int)((total_sec*reading_rate)))
+					setTimer(SEND_PACKET, 0);// the first measurement
+					else
+					setTimer(SEND_PACKET, data_spacing);
 					
-					//--alarmt;
-				//}else if (alarmt == 0) {
-						//agent_request_association_release(CONTEXT_ID);
-						//--alarmt;
-						//dataSN++;
-						//setTimer(SEND_PACKET, 0);
-				//}else if (alarmt == -1) {
-						//agent_disconnect(CONTEXT_ID);
-						//--alarmt;
-				//}else{//associantion abort received
-				////cancelTimer(SEND_PACKET);
-				////cancelTimer(TO_ASSOC);
-				////cancelTimer(TO_OPERA);
-				//if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating)  && alarmt > 0){
-				////if ((ctx->fsm->state == fsm_state_unassociated)  && alarmt > 0){
-					//if (getTimer(SEND_PACKET) != 0)
-					//alarmt++;
+					--alarmt;
+				}else if (alarmt == 0) {
+						agent_request_association_release(CONTEXT_ID);
+						--alarmt;
+						dataSN++;
+						setTimer(SEND_PACKET, 0);
+				}else if (alarmt == -1) {
+						agent_disconnect(CONTEXT_ID);
+						--alarmt;
+				}else{//associantion abort received
+				//cancelTimer(SEND_PACKET);
+				//cancelTimer(TO_ASSOC);
+				//cancelTimer(TO_OPERA);
+				if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating)  && alarmt > 0){
+				//if ((ctx->fsm->state == fsm_state_unassociated)  && alarmt > 0){
+					if (getTimer(SEND_PACKET) != 0)
+					alarmt++;
 					
-					//cancelTimer(SEND_PACKET);
-					//cancelTimer(TO_ASSOC);
-					//cancelTimer(TO_OPERA);
-					//agent_request_association_abort(CONTEXT_ID);
-					//st_msg[nodeNumber].tam_buff = 0;
-					//st_msg[nodeNumber].buff_msgSed.clear();
-					//st_msg[nodeNumber].msgType.pop();
-					//dataSN++;
-					//service_init(ctx);
-					//agent_associate(CONTEXT_ID);
-					//setTimer(SEND_PACKET, 0);
-				//}
-				//}
+					cancelTimer(SEND_PACKET);
+					cancelTimer(TO_ASSOC);
+					cancelTimer(TO_OPERA);
+					agent_request_association_abort(CONTEXT_ID);
+					st_msg[nodeNumber].tam_buff = 0;
+					st_msg[nodeNumber].buff_msgSed.clear();
+					st_msg[nodeNumber].msgType.pop();
+					dataSN++;
+					service_init(ctx);
+					agent_associate(CONTEXT_ID);
+					setTimer(SEND_PACKET, 0);
+				}
+				}
 				
 				context_unlock(ctx);
 				

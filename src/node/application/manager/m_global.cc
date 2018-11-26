@@ -158,7 +158,7 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
 	data_list_del(list);
 	free(data);
 	
-	device_reqdata();
+	//device_reqdata();
 }
 
 /**
