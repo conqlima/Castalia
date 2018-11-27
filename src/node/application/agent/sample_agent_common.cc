@@ -49,6 +49,90 @@ extern "C" {
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <iostream>
+
+float ECG_samples[] = {
+-0.060,
+-0.065,
+-0.060,
+-0.075,
+-0.065,
+-0.070,
+-0.070,
+-0.090,
+-0.080,
+-0.095,
+-0.080,
+-0.095,
+-0.080,
+-0.095,
+-0.085,
+-0.090,
+-0.090,
+-0.100,
+-0.085,
+-0.105,
+-0.090,
+-0.045,
+ 0.005,
+ 0.015,
+ 0.045,
+ 0.155,
+ 0.140,
+ 0.045,
+ 0.005,
+-0.040,
+-0.085,
+-0.200,
+-0.195,
+-0.200,
+-0.200,
+-0.240,
+-0.130,
+ 0.340,
+ 1.155,
+ 1.470,
+-0.155,
+-0.825,
+-0.590,
+-0.350,
+-0.155,
+-0.170,
+-0.140,
+-0.155,
+-0.115,
+-0.125,
+-0.090,
+-0.095,
+-0.065,
+-0.055,
+-0.015,
+-0.005,
+ 0.035,
+ 0.045,
+ 0.090,
+ 0.110,
+ 0.150,
+ 0.180,
+ 0.205,
+ 0.225,
+ 0.230,
+ 0.220,
+ 0.235,
+ 0.230,
+ 0.200,
+ 0.170,
+ 0.120,
+ 0.075,
+ 0.040,
+ 0.020,
+ 0.005,
+-0.005,
+-0.005,
+-0.010,
+-0.015,
+-0.010,
+ 0.000};
 
 intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 					0xbb, 0xdd, 0xff};
@@ -209,22 +293,28 @@ void *basic_ECG_event_report_cb()
 
 	time(&now);
 	localtime_r(&now, &nowtm);
-	std::ifstream filemV ("mv");
-	double R;
-	int i = 0;
-	std::string line;
-	while(std::getline(filemV, line))
+	//std::ifstream filein("mv");
+	//if (!filein.is_open())
+	//perror("error while opening file");
+	//for (std::string line; std::getline(filein, line); )
+	float R;
+	int j = 0;
+	for (static int i = 0; i < 80; i++)
 	{
-		std::istringstream iss(line);
-		if (!(iss >> R)){ // error
-	      break;
-	    }
+		//std::istringstream iss(line);
+		//if (!(iss >> R)){ // error
+	      //break;
+	    //}
+	    R = ECG_samples[i];
 	    float M = (2.0-(-2.0))/(800-0);
 	    float B = 2-(M*800);
 	    int X = (int)((R - B) / M);
-	    data->mV[i] = X;
-	    i++;
-	    if (i > 20) break;
+	    data->mV[j] = X;
+	    j++;
+	    if (j > 19){ 
+	    j = 0;
+	    break;
+		}
 	}
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;
