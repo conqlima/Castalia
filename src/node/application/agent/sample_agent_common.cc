@@ -298,7 +298,9 @@ void *basic_ECG_event_report_cb()
 	//perror("error while opening file");
 	//for (std::string line; std::getline(filein, line); )
 	float R;
+	int16 X[20];
 	int j = 0;
+	data->mV = calloc(sizeof(intu8), 40);
 	for (static int i = 0; i < 80; i++)
 	{
 		//std::istringstream iss(line);
@@ -306,16 +308,16 @@ void *basic_ECG_event_report_cb()
 	      //break;
 	    //}
 	    R = ECG_samples[i];
-	    float M = (2.0-(-2.0))/(800-0);
-	    float B = 2-(M*800);
-	    int X = (int)((R - B) / M);
-	    data->mV[j] = X;
+	    float M = (2.0-(-2.0))/(800.0-0.0);
+	    float B = 2.0-(M*800.0);
+	    X[j] = (int16)((R - B) / M);
 	    j++;
 	    if (j > 19){ 
-	    j = 0;
-	    break;
+			j = 0;
+			break;
 		}
 	}
+	memcpy ( data->mV , X , 40 );
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;
 	data->month = nowtm.tm_mon + 1;
