@@ -322,6 +322,7 @@ void Manager::finishSpecific() {
 MyPacket* Manager::createDataPacket(int seqNum)
 {
 	MyPacket *pkt = new MyPacket("mypacket", APPLICATION_PACKET);
+	//size of buff
 	pkt->setBuffArraySize(m_st_msg[my_plugin_number/2].tam_buff);
 	for (int i = 0; i < m_st_msg[my_plugin_number/2].tam_buff; i++)
 	{

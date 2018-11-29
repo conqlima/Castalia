@@ -253,9 +253,6 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					trace() << "Packet of size 0";
 				}
 				
-				dataSN++;
-				setTimer(SEND_PACKET, 0);
-				
 				/*Checks if agent can send measurements*/
 				if (ctx->fsm->state == fsm_state_operating && alarmt > 0) {
 					agent_send_data(CONTEXT_ID);

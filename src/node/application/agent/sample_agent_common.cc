@@ -131,8 +131,7 @@ float ECG_samples[] = {
 -0.005,
 -0.010,
 -0.015,
--0.010,
- 0.000};
+-0.010};
 
 intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 					0xbb, 0xdd, 0xff};
@@ -310,12 +309,13 @@ void *basic_ECG_event_report_cb()
 	    R = ECG_samples[i];
 	    float M = (2.0-(-2.0))/(800.0-0.0);
 	    float B = 2.0-(M*800.0);
-	    X[j] = (intu16)((R - B) / M);
-	    j++;
+
 	    if (j > 19){ 
 			j = 0;
 			break;
 		}
+		X[j] = (intu16)((R - B) / M);
+		j++;
 	}
 	memcpy ( data->mV , X , 40 );
 	data->century = nowtm.tm_year / 100 + 19;
