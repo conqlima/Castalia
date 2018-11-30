@@ -50,6 +50,7 @@ extern "C" {
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <netinet/in.h>
 
 float ECG_samples[] = {
 -0.060,
@@ -307,8 +308,8 @@ void *basic_ECG_event_report_cb()
 	      //break;
 	    //}
 	    R = ECG_samples[i];
-	    float M = (2.0-(-2.0))/(800.0-0.0);
-	    float B = 2.0-(M*800.0);
+	    float M = (2.0-(-2.0))/(800.0-0.0);//0,005
+	    float B = 2.0-(M*800.0);//-2
 
 	    if (j > 19){ 
 			j = 0;
@@ -317,7 +318,12 @@ void *basic_ECG_event_report_cb()
 		X[j] = (intu16)((R - B) / M);
 		j++;
 	}
-	memcpy ( data->mV , X , 40 );
+	for (int i = 0; i < 20; i++)
+	{
+		*((uint16_t *) (data->mV + (i*2))) = htons(X[i]);
+	}
+	
+	//memcpy ( data->mV , X , 40 );
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;
 	data->month = nowtm.tm_mon + 1;
