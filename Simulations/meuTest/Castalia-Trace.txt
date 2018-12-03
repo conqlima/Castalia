@@ -1,0 +1,85 @@
+
+1.014559492666    SN.node[4].Application                   Sending packet #1 to node 0
+1.014559492666    SN.node[4].Application                   type: Association Request
+1.014559492666    SN.node[4].Application                   Sending [mypacket] of size 74 bytes to communication layer
+1.016244492664    SN.node[4].Application                   Received packet #1 from node 0
+1.016244492664    SN.node[4].Application                   type: Association Response
+1.016244492664    SN.node[4].Application                   type: GET configuration with confirmation
+1.016244492664    SN.node[4].Application                   Sending packet #2 to node 0
+1.016244492664    SN.node[4].Application                   type: response of a GET configuration
+1.016244492664    SN.node[4].Application                   type: Measurement with confirmation
+1.016244492664    SN.node[4].Application                   Sending [mypacket] of size 282 bytes to communication layer
+1.019210742662    SN.node[4].Application                   Received packet #2 from node 0
+1.019210742662    SN.node[4].Application                   type: response of a measurement with confirmation
+26.019567129861   SN.node[4].Application                   Sending packet #3 to node 0
+26.019567129861   SN.node[4].Application                   type: Measurement with confirmation
+26.019567129861   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+26.021142754859   SN.node[4].Application                   Received packet #3 from node 0
+26.021142754859   SN.node[4].Application                   type: response of a measurement with confirmation
+51.021499142058   SN.node[4].Application                   Sending packet #4 to node 0
+51.021499142058   SN.node[4].Application                   type: Measurement with confirmation
+51.021499142058   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+51.023074767056   SN.node[4].Application                   Received packet #4 from node 0
+51.023074767056   SN.node[4].Application                   type: response of a measurement with confirmation
+76.023431154255   SN.node[4].Application                   Sending packet #5 to node 0
+76.023431154255   SN.node[4].Application                   type: Measurement with confirmation
+76.023431154255   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+79.023473920718   SN.node[4].Application                   response not received for packet #5 in operating mode, aborting...
+79.023473920718   SN.node[4].Application                   type: Association Abort
+79.023473920718   SN.node[4].Application                   Sending [mypacket] of size 26 bytes to communication layer
+1.014559492666    SN.node[4].Application                   Sending packet #1 to node 0
+1.014559492666    SN.node[4].Application                   type: Association Request
+1.014559492666    SN.node[4].Application                   Sending [mypacket] of size 74 bytes to communication layer
+1.016244492664    SN.node[4].Application                   Received packet #1 from node 0
+1.016244492664    SN.node[4].Application                   type: Association Response
+1.016244492664    SN.node[4].Application                   type: GET configuration with confirmation
+1.016244492664    SN.node[4].Application                   Sending packet #2 to node 0
+1.016244492664    SN.node[4].Application                   type: response of a GET configuration
+1.016244492664    SN.node[4].Application                   type: Measurement with confirmation
+1.016244492664    SN.node[4].Application                   Sending [mypacket] of size 282 bytes to communication layer
+1.019210742662    SN.node[4].Application                   Received packet #2 from node 0
+1.019210742662    SN.node[4].Application                   type: response of a measurement with confirmation
+26.019567129861   SN.node[4].Application                   Sending packet #3 to node 0
+26.019567129861   SN.node[4].Application                   type: Measurement with confirmation
+26.019567129861   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+26.021142754859   SN.node[4].Application                   Received packet #3 from node 0
+26.021142754859   SN.node[4].Application                   type: response of a measurement with confirmation
+51.021499142058   SN.node[4].Application                   Sending packet #4 to node 0
+51.021499142058   SN.node[4].Application                   type: Measurement with confirmation
+51.021499142058   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+51.023074767056   SN.node[4].Application                   Received packet #4 from node 0
+51.023074767056   SN.node[4].Application                   type: response of a measurement with confirmation
+76.023431154255   SN.node[4].Application                   Sending packet #5 to node 0
+76.023431154255   SN.node[4].Application                   type: Measurement with confirmation
+76.023431154255   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+79.023473920718   SN.node[4].Application                   response not received for packet #5 in operating mode, aborting...
+79.023473920718   SN.node[4].Application                   type: Association Abort
+79.023473920718   SN.node[4].Application                   Sending [mypacket] of size 26 bytes to communication layer
+1.014559492666    SN.node[4].Application                   Sending packet #1 to node 0
+1.014559492666    SN.node[4].Application                   type: Association Request
+1.014559492666    SN.node[4].Application                   Sending [mypacket] of size 74 bytes to communication layer
+1.016244492664    SN.node[4].Application                   Received packet #1 from node 0
+1.016244492664    SN.node[4].Application                   type: Association Response
+1.016244492664    SN.node[4].Application                   type: GET configuration with confirmation
+1.016244492664    SN.node[4].Application                   Sending packet #2 to node 0
+1.016244492664    SN.node[4].Application                   type: response of a GET configuration
+1.016244492664    SN.node[4].Application                   type: Measurement with confirmation
+1.016244492664    SN.node[4].Application                   Sending [mypacket] of size 282 bytes to communication layer
+1.019210742662    SN.node[4].Application                   Received packet #2 from node 0
+1.019210742662    SN.node[4].Application                   type: response of a measurement with confirmation
+26.019567129861   SN.node[4].Application                   Sending packet #3 to node 0
+26.019567129861   SN.node[4].Application                   type: Measurement with confirmation
+26.019567129861   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+26.021142754859   SN.node[4].Application                   Received packet #3 from node 0
+26.021142754859   SN.node[4].Application                   type: response of a measurement with confirmation
+51.021499142058   SN.node[4].Application                   Sending packet #4 to node 0
+51.021499142058   SN.node[4].Application                   type: Measurement with confirmation
+51.021499142058   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+51.023074767056   SN.node[4].Application                   Received packet #4 from node 0
+51.023074767056   SN.node[4].Application                   type: response of a measurement with confirmation
+76.023431154255   SN.node[4].Application                   Sending packet #5 to node 0
+76.023431154255   SN.node[4].Application                   type: Measurement with confirmation
+76.023431154255   SN.node[4].Application                   Sending [mypacket] of size 104 bytes to communication layer
+79.023473920718   SN.node[4].Application                   response not received for packet #5 in operating mode, aborting...
+79.023473920718   SN.node[4].Application                   type: Association Abort
+79.023473920718   SN.node[4].Application                   Sending [mypacket] of size 26 bytes to communication layer
