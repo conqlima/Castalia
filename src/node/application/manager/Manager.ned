@@ -2,7 +2,7 @@ package node.application.manager;
 simple Manager like node.application.iApplication
 	{
 	parameters:
-		string applicationID = default("a"); //mandatory parameter
+		string applicationID = default(""); //mandatory parameter
 		bool collectTraceInfo = default(false); // mandatory parameter
 		int priority = default(1); // mandatory parameter
 		int packetHeaderOverhead = default(16);	// in bytes

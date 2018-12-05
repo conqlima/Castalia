@@ -6,10 +6,24 @@
 struct mds_system_data;
 extern intu8 AGENT_SYSTEM_ID_VALUE[];
 
+/*See Scale and range specification example, pg 151, Annex B, from Optimized Exchange Protocol 20601 */
+/*
+ * M = (upper-absolute-value – lower-absolute-value) / (upper-scaled-value – lower-scaled-value) 
+ * B = upper-absolute-value – (M × upper-scaled-value)
+ * */
+
 //double M = (2.0-(-2.0))/(800.0-0.0);//0,005
 const double M = 0.005;
 //double B = 2.0-(M*800.0);//-2
 const double B = -2.000;
+
+/* The number of samples can't be changed. 
+ * If you really need another number of samples,
+ * you must change the size of the message in file
+ * basic_ECG.c, change the loop in json_encoder.c
+ * function sa_convert_scaled_values2absolute() for the
+ * new size.
+**/
 static const double ECG_samples[] = {
 -0.060,//388
 -0.065,//387
@@ -91,10 +105,6 @@ static const double ECG_samples[] = {
 -0.010,
 -0.015,
 -0.010};//80 values, 79º value
-
-//extern int alarms;
-//extern ContextId CONTEXT_ID;
-//extern CommunicationPlugin comm_plugin;
 
 void *oximeter_event_report_cb();
 void *blood_pressure_event_report_cb();

@@ -59,7 +59,7 @@ void Manager::startup()
 			//node number
 			unsigned int nodeId = i/2;
 			m_comm_plugin[nodeId] = communication_plugin();
-			m_castalia_mode(i);
+			m_castalia_mode(nodeId);
 			fprintf(stderr, "\nIEEE 11073 Sample application\n");
 			
 			m_comm_plugin[nodeId].timer_count_timeout = m_timer_count_timeout;
@@ -129,11 +129,6 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		
 		/*clear the Tmsg struct to receive a new packet*/
 		m_st_msg[sourceId].tam_buff = 0;
-		
-		//if(m_st_msg[sourceId].buff_msg){
-		//free(m_st_msg[sourceId].buff_msg);
-		//m_st_msg[sourceId].buff_msg = NULL;
-		//}
 		m_st_msg[sourceId].buff_msgRep.clear();
 		
 		while(!m_st_msg[sourceId].msgType.empty())
@@ -141,12 +136,9 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 		
 		m_st_msg[sourceId].tam_buff = rcvPacket->getTam_buff();
 		
-		//m_st_msg[sourceId].buff_msg = (streamOfByte) malloc(sizeof(uint8_t)*(m_st_msg[sourceId].tam_buff));
-		
 		for (int i = 0; i < m_st_msg[sourceId].tam_buff; i++)
 		{
 			m_st_msg[sourceId].buff_msgRep.push_back(rcvPacket->getBuff(i));
-			//m_st_msg[sourceId].buff_msg[i] = rcvPacket->getBuff(i);
 		}
 
 		if ((strcmp(source,SELF_NETWORK_ADDRESS)) != 0) {
@@ -174,7 +166,6 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 							trace() << "type: " << m_st_msg[sourceId].msgType.front();
 							m_st_msg[sourceId].msgType.pop();
 					}
-					
 					
 					if(m_ctx->fsm->state == fsm_state_unassociated)
 					cancelTimer(sourceId);

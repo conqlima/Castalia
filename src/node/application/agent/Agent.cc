@@ -5,9 +5,18 @@ extern "C" {
 
 Define_Module(Agent);
 
+/*this struct represent all the msg exchanged between nodes
+*/
 Tmsg* st_msg = NULL;
+/*this struct contains all information about an agent
+*/
 CommunicationPlugin* comm_plugin = NULL;
+/*var used by Antidote stack library to set 1 if 
+ * timeout is required 0 otherwise. 
+*/
 int* SETTIMER = NULL;
+/*var set by user in .ini file to define the hub node.
+ * The hub node has to be always the MANAGER*/
 int HUBNODE = 0;
 
 void Agent::startup()

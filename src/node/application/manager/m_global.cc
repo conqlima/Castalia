@@ -47,7 +47,7 @@ ContextId m_CONTEXT_ID = {2, 0};
 /**
  *  Variable used by the stack
  */
-unsigned long long m_port = 0;
+unsigned long long m_port = 0;//not used for Castalia
 
 static map<long,int> first_association;
 
@@ -201,11 +201,11 @@ void m_timer_reset_timeout(Context *ctx)
 /**
  * Configure application to use castalia plugin
  */
-void m_castalia_mode(unsigned int my_plugin_number)
+void m_castalia_mode(unsigned int nodeId)
 {
 	m_CONTEXT_ID.plugin = 2;
 	m_CONTEXT_ID.connid = m_port;
-	m_plugin_network_castalia_manager_setup(&m_comm_plugin[my_plugin_number/2], m_port);
+	m_plugin_network_castalia_manager_setup(&m_comm_plugin[nodeId], m_port);
 	first_association.clear();
 }
 

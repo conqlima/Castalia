@@ -57,11 +57,6 @@ extern "C" {
 intu8 AGENT_SYSTEM_ID_VALUE[] = { 0x11, 0x33, 0x55, 0x77, 0x99,
 					0xbb, 0xdd, 0xff};
 
-//int alarms = 4;
-//ContextId CONTEXT_ID = {1, 1};
-//CommunicationPlugin comm_plugin = COMMUNICATION_PLUGIN_NULL;
-
-
 /**
  * Generate data for oximeter event report
  */
@@ -213,30 +208,17 @@ void *basic_ECG_event_report_cb()
 
 	time(&now);
 	localtime_r(&now, &nowtm);
-	//std::ifstream filein("mv");
-	//if (!filein.is_open())
-	//perror("error while opening file");
-	//for (std::string line; std::getline(filein, line); )
 	double R;
-	intu16 X[20];
-	int j = 0;
-	data->mV = (intu8*) calloc(sizeof(intu8), 40);
-	for (static int i = 0; i < 80; i++)
+	intu16 X;
+	data->mV = (intu8*) calloc(sizeof(intu8), 160);
+	//80 samples
+	for (int i = 0; i < 80; i++)
 	{
-	    R = ECG_samples[i];
-	    if (j > 19){ 
-			j = 0;
-			break;
-		}
-		X[j] = (intu16)((R - B) / M);
-		j++;
+		R = ECG_samples[i];
+		X = (intu16)((R - B) / M);
+		(*((uint16_t *) (data->mV + (i*2)))) = htons(X);
 	}
-	for (int k = 0; k < 20; k++)
-	{
-		*((uint16_t *) (data->mV + (k*2))) = htons(X[k]);
-	}
-	
-	//memcpy ( data->mV , X , 40 );
+
 	data->century = nowtm.tm_year / 100 + 19;
 	data->year = nowtm.tm_year % 100;
 	data->month = nowtm.tm_mon + 1;
