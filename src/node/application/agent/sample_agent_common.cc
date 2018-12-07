@@ -28,14 +28,13 @@
  * \date Apr 17, 2012
  */
 extern "C" {
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <unistd.h>
-#include <signal.h>
-#include <time.h>
-
+//#include <stdio.h>
+//#include <string.h>
+//#include <stdlib.h>
+//#include <unistd.h>
+//#include <unistd.h>
+//#include <signal.h>
+//#include <time.h>
 #include <ieee11073.h>
 #include "specializations/pulse_oximeter.h"
 #include "specializations/blood_pressure_monitor.h"
@@ -44,13 +43,15 @@ extern "C" {
 #include "specializations/thermometer.h"
 #include "specializations/basic_ECG.h"
 #include "agent.h"
-}
-#include "sample_agent_common.h"
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <iostream>
 #include <netinet/in.h>
+}
+
+//#include <fstream>
+//#include <sstream>
+#include <cstring>
+//#include <iostream>
+
+#include "sample_agent_common.h"
 
 
 
@@ -210,7 +211,7 @@ void *basic_ECG_event_report_cb()
 	localtime_r(&now, &nowtm);
 	double R;
 	intu16 X;
-	data->mV = (intu8*) calloc(sizeof(intu8), 160);
+	data->mV = (intu8*) calloc(160, sizeof(intu8));
 	//80 samples
 	for (int i = 0; i < 80; i++)
 	{
@@ -237,7 +238,7 @@ void *basic_ECG_event_report_cb()
 struct mds_system_data *mds_data_cb()
 {
 	struct mds_system_data* data = (mds_system_data*) malloc(sizeof(struct mds_system_data));
-	memcpy(&data->system_id, AGENT_SYSTEM_ID_VALUE, 8);
+	std::memcpy(&data->system_id, AGENT_SYSTEM_ID_VALUE, 8);
 	return data;
 }
 

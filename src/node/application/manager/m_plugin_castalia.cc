@@ -44,28 +44,29 @@ extern "C" {
 #include "util/ioutil.h"
 #include "manager.h"
 #include "dim/nomenclature.h"
-#include <arpa/inet.h>
+//#include <arpa/inet.h>
 }
 
-#include "CastaliaModule.h"
-#include "VirtualApplication.h"
+//#include "CastaliaModule.h"
+//#include "VirtualApplication.h"
 #include "MyPacket_m.h"
 #include "m_plugin_castalia.h"
 #include "m_global.h"
-#include "Manager.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cerrno>
-#include <cstdarg>
-#include <unistd.h>
-#include <fcntl.h>
 #include <map>
+//#include "Manager.h"
+
+//#include <cstdio>
+//#include <cstdlib>
+//#include <cstring>
+//#include <cerrno>
+//#include <cstdarg>
+//#include <unistd.h>
+//#include <fcntl.h>
+#include <map>
+#include <netinet/in.h>
 
 // #define TEST_FRAGMENTATION 1
-
-Define_Module(Manager);
 
 unsigned int m_plugin_id = 2;
 
@@ -78,8 +79,8 @@ static intu8 *buffer = NULL;
 static int buffer_size = 0;
 static int buffer_retry = -1;
 
-static map<long,int> m_controlPackets;
-static map<long,int> m_measurementPackets;
+static std::map<long,int> m_controlPackets;
+static std::map<long,int> m_measurementPackets;
 
 using namespace std;
 
@@ -413,9 +414,13 @@ static int m_network_castalia_wait_for_data(Context *ctx)
 
 static void m_message_type(intu8 * buffer, int size, Context* ctx){
 	unsigned int nodeId = (ctx->id.plugin+1) / 2;
-	intu8 * bufferTmp = (intu8 *) calloc(1, size * sizeof(intu8));
-	bufferTmp = buffer;
-	
+	intu8 * bufferTmp = (intu8 *) calloc(size, sizeof(intu8));
+	//bufferTmp = buffer;
+	intu8 * initial_address = bufferTmp;
+	for (int i = 0; i < size; i++)
+	{
+		bufferTmp[i] = buffer[i];
+	}
 	intu16 choice;
 	choice = ntohs(*((uint16_t *) bufferTmp));
 	bufferTmp += 8;
@@ -546,6 +551,7 @@ static void m_message_type(intu8 * buffer, int size, Context* ctx){
 		m_st_msg[nodeId].msgType.push("unknown data apdu choice");
 		break;
 	}
+	free(initial_address);
 }
 
 /**

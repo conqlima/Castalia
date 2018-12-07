@@ -20,26 +20,26 @@
  * 
  * 
  */
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <ctime>
-#include <csignal>
-
-#include "Agent.h"
-#include "plugin_castalia.h"
-#include "global.h"
-#include "VirtualApplication.h"
-#include "MyPacket_m.h"
-
 extern "C" {
 #include <ieee11073.h>
 #include "agent.h"
-#include "sample_agent_common.h"
 }
 
-Define_Module(Agent);
 
+//#include <cstdio>
+//#include <cstring>
+//#include <cstdlib>
+//#include <ctime>
+//#include <csignal>
+
+//#include "sample_agent_common.h"
+//#include "Agent.h"
+#include "plugin_castalia.h"
+#include "global.h"
+//#include "VirtualApplication.h"
+#include "MyPacket_m.h"
+
+//#include <map>
 /**
  * Port used by agent to send network data
  */

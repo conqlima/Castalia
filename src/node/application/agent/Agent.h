@@ -1,19 +1,6 @@
 #ifndef _AGENT_H_
 #define _AGENT_H_
 
-#include "VirtualApplication.h"
-#include "MyPacket_m.h"
-
-#include "plugin_castalia.h"
-#include "global.h"
-#include "sample_agent_common.h"
-
-#include <simtime.h>
-#include <iostream>
-#include <string>
-#include <csignal>
-#include <cstdlib>
-
 extern "C" {
 #include "communication/plugin/plugin.h"
 #include "communication/communication.h"
@@ -29,6 +16,17 @@ extern "C" {
 #include "agent.h"
 }
 
+#include "VirtualApplication.h"
+#include "MyPacket_m.h"
+#include "plugin_castalia.h"
+#include "global.h"
+#include "sample_agent_common.h"
+
+//#include <simtime.h>
+//#include <iostream>
+//#include <string>
+//#include <csignal>
+//#include <cstdlib>
 
 using namespace std;
 

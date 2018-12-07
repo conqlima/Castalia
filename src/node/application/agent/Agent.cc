@@ -1,6 +1,6 @@
-extern "C" {
-#include "communication/plugin/plugin.h"
-}
+//extern "C" {
+//#include "communication/plugin/plugin.h"
+//}
 #include "Agent.h"
 
 Define_Module(Agent);
@@ -17,7 +17,7 @@ CommunicationPlugin* comm_plugin = NULL;
 int* SETTIMER = NULL;
 /*var set by user in .ini file to define the hub node.
  * The hub node has to be always the MANAGER*/
-int HUBNODE = 0;
+int HUBNODE;
 
 void Agent::startup()
 {
@@ -49,7 +49,8 @@ void Agent::startup()
 	data_spacing = reading_rate > 0 ? 1.0 / reading_rate : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 
 	/*total number of nodes*/
-	numNodes = getParentModule()->getParentModule()->par("numNodes");
+	//numNodes = getParentModule()->getParentModule()->par("numNodes");
+	numNodes = getNumberOfNodes();
 	
 	/*creates a Tmsg for each agent*/
 	if (st_msg == NULL)
@@ -410,11 +411,10 @@ void Agent::timerFiredCallback(int index)
 		}
 		
 		case TO_OPERA:{
+				trace() << "response not received for packet #" << dataSN << " in operating mode";
+
 				st_msg[nodeNumber].tam_buff = 0;
-				//free(st_msg[nodeNumber].buff_msg);
-				//st_msg[nodeNumber].buff_msg = NULL;
 				st_msg[nodeNumber].buff_msgSed.clear();
-				trace() << "response not received for packet #" << dataSN << " in operating mode, aborting...";
 				dataSN++;
 				agent_request_association_abort(CONTEXT_ID);
 				while(!st_msg[nodeNumber].msgType.empty()){
@@ -523,5 +523,48 @@ MyPacket* Agent::createDataPacket(int seqNum)
 	return pkt;
 }
 
+void Agent::tryNewAssociation(void)
+{
+	Context *ctx;
+	CONTEXT_ID = {my_plugin_number, 0};
+	ctx = context_get_and_lock(CONTEXT_ID);
+				dataSN++;
+				agent_request_association_abort(CONTEXT_ID);
+				while(!st_msg[nodeNumber].msgType.empty()){
+					trace() << "type: " << st_msg[nodeNumber].msgType.front();
+					st_msg[nodeNumber].msgType.pop();
+				}
+				toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
+				packetsSent[recipientId]++;
+				
+				if (alarmt > 0){
+				cancelTimer(SEND_PACKET);
+				cancelTimer(TO_ASSOC);
+				cancelTimer(TO_OPERA);
+				st_msg[nodeNumber].tam_buff = 0;
+				st_msg[nodeNumber].buff_msgSed.clear();
+				dataSN++;
+				service_init(ctx);
+				agent_associate(CONTEXT_ID);
+				setTimer(SEND_PACKET, 0);
+				}
+	context_unlock(ctx);
+}
 
-
+void Agent::retransmitPacket(void)
+{
+	Context *ctx;
+	CONTEXT_ID = {my_plugin_number, 0};
+	ctx = context_get_and_lock(CONTEXT_ID);
+			//if(numOfRetransmissions < MAXNUMOFRETRANSMISSIONS)
+				trace() << "resending packet #" << dataSN;//sequence number
+				while(!st_msg[nodeNumber].msgType.empty()){
+					trace() << "type: " << st_msg[nodeNumber].msgType.front();
+					st_msg[nodeNumber].msgType.pop();
+				}
+				toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
+				packetsSent[recipientId]++;
+				//numOfRetransmissions--;
+				/*criar controle de retransmissão*/
+	context_unlock(ctx);
+}

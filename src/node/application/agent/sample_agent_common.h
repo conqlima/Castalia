@@ -47,7 +47,7 @@ static const double ECG_samples[] = {
 -0.105,//19º value
 -0.090,
 -0.045,
- 0.005,
+ 0.005,//0.000 is received
  0.015,
  0.045,
  0.155,

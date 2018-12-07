@@ -1,11 +1,11 @@
 Castalia| what:General (1)
-Castalia| when:2018-12-05 12:16
+Castalia| when:2018-12-06 21:54
 Castalia| repeat:0 label:timelimit=101s
 Castalia|		module:SN.Simulation
 Castalia|			simple output name:Execution time, seconds
-Castalia|				0.17
+Castalia|				2.416
 Castalia|			simple output name:Execution ratio (simtime/realtime)
-Castalia|				594.200739266
+Castalia|				41.8104824815
 Castalia|	module:SN.wirelessChannel
 Castalia|		histogram name:Fade depth distribution
 Castalia|		histogram_min:-50 histogram_max:15
@@ -50,16 +50,6 @@ Castalia|		 index:4 simple output name:Measurement Packets
 Castalia|			116 total
 Castalia|		 index:5 simple output name:Measurement Packets
 Castalia|			2 total
-Castalia|		 index:1 simple output name:Packets loss rate
-Castalia|			0.0714286 total
-Castalia|		 index:2 simple output name:Packets loss rate
-Castalia|			0 total
-Castalia|		 index:3 simple output name:Packets loss rate
-Castalia|			0.117647 total
-Castalia|		 index:4 simple output name:Packets loss rate
-Castalia|			0.0708662 total
-Castalia|		 index:5 simple output name:Packets loss rate
-Castalia|			0.2 total
 Castalia|		 index:1 simple output name:Packets received per node
 Castalia|			13 
 Castalia|		 index:2 simple output name:Packets received per node
@@ -70,16 +60,6 @@ Castalia|		 index:4 simple output name:Packets received per node
 Castalia|			118 
 Castalia|		 index:5 simple output name:Packets received per node
 Castalia|			4 
-Castalia|		 index:1 simple output name:Packets reception rate
-Castalia|			0.928571 total
-Castalia|		 index:2 simple output name:Packets reception rate
-Castalia|			1 total
-Castalia|		 index:3 simple output name:Packets reception rate
-Castalia|			0.882353 total
-Castalia|		 index:4 simple output name:Packets reception rate
-Castalia|			0.929134 total
-Castalia|		 index:5 simple output name:Packets reception rate
-Castalia|			0.8 total
 Castalia|		histogram name:Application level latency, in ms
 Castalia|		histogram_min:0 histogram_max:600
 Castalia|		histogram_values 231 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -153,7 +133,7 @@ Castalia|		histogram_min:0 histogram_max:200
 Castalia|		histogram_values 2 0 0 0 0 0 0 0 0 0 0
 Castalia|	module:SN.node[4].ResourceManager
 Castalia|		simple output name:Consumed Energy
-Castalia|			0.313056 
+Castalia|			0.313057 
 Castalia|		simple output name:Remaining Energy
 Castalia|			18719.7 
 Castalia|	module:SN.node[4].Communication.Radio

@@ -1,17 +1,6 @@
 #ifndef _MANAGER_H_
 #define _MANAGER_H_
 
-#include "VirtualApplication.h"
-#include "MyPacket_m.h"
-#include "m_plugin_castalia.h"
-#include "m_global.h"
-#include "Agent.h"
-
-#include <iostream>
-#include <string>
-#include <csignal>
-#include <cstdlib>
-
 extern "C" {
 #include "communication/plugin/plugin.h"
 #include "communication/communication.h"
@@ -21,6 +10,16 @@ extern "C" {
 #include "manager.h"
 }
 
+#include "VirtualApplication.h"
+#include "MyPacket_m.h"
+#include "m_plugin_castalia.h"
+#include "m_global.h"
+//#include "Agent.h"
+
+//#include <iostream>
+//#include <string>
+//#include <csignal>
+//#include <cstdlib>
 
 using namespace std;
 

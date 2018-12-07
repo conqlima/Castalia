@@ -3,11 +3,14 @@
 
 extern "C" {
 #include "communication/context.h"
-#include <time.h>
+//#include <time.h>
 #include "api/api_definitions.h"
 #include "communication/plugin/plugin.h"
 #include "communication/service.h"
 }
+
+#include <vector>
+#include <queue>
 
 typedef std::queue<const char*> queueOfMsgType;
 typedef std::vector<uint8_t> streamOfByte;
@@ -37,7 +40,7 @@ extern CommunicationPlugin* m_comm_plugin;
 extern unsigned long long m_port;
 
 /**
- * Struct to represent the messages exchanged
+ * Struct to represent the messages
  */
 extern m_Tmsg* m_st_msg;
 

@@ -20,24 +20,29 @@
  * 
  * 
  */
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <ctime>
-#include <csignal>
-
-#include "Manager.h"
-#include "m_plugin_castalia.h"
-#include "m_global.h"
-#include "VirtualApplication.h"
-#include "MyPacket_m.h"
 
 extern "C" {
 #include "ieee11073.h"
 #include "manager.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 }
 
-Define_Module(Manager);
+//#include <cstdio>
+//#include <cstring>
+//#include <cstdlib>
+//#include <ctime>
+//#include <csignal>
+
+//#include "Manager.h"
+#include "m_plugin_castalia.h"
+#include "m_global.h"
+//#include "VirtualApplication.h"
+#include "MyPacket_m.h"
+
+
+
 
 /**
  * Plugin used by agent to send network data
@@ -49,7 +54,7 @@ ContextId m_CONTEXT_ID = {2, 0};
  */
 unsigned long long m_port = 0;//not used for Castalia
 
-static map<long,int> first_association;
+static std::map<long,int> first_association;
 
 /**
  * Callback function that is called whenever a device

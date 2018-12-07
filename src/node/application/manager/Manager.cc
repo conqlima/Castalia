@@ -165,6 +165,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 						communication_read_input_stream(m_ctx->id);
 							trace() << "type: " << m_st_msg[sourceId].msgType.front();
 							m_st_msg[sourceId].msgType.pop();
+							
 					}
 					
 					if(m_ctx->fsm->state == fsm_state_unassociated)
@@ -268,7 +269,7 @@ void Manager::finishSpecific() {
 	long bytesDelivered = 0;
 	for (unsigned int i = 0; i < numNodes; i++) {
 		//tenta converter a variável topo (que é do tipo cTopology para uma variável do tipo Manager em tempo de execução)
-		Agent *appModule = dynamic_cast<Agent*>
+		Manager *appModule = dynamic_cast<Manager*>
 			(topo->getNode(i)->getModule()->getSubmodule("Application"));
 		if (appModule) {
 			int packetsSent = appModule->getPacketsSent(self);
