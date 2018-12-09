@@ -23,6 +23,7 @@
 extern "C" {
 #include <ieee11073.h>
 #include "agent.h"
+#include "util/log.h"
 }
 
 
@@ -75,7 +76,8 @@ void timer_reset_timeout(Context *ctx)
  */
 void device_associated(Context *ctx)
 {
-	fprintf(stderr, " main: Associated\n");
+	//fprintf(stderr, " main: Associated\n");
+	DEBUG(" main: Associated\n");
 }
 
 /**
@@ -87,7 +89,8 @@ void device_associated(Context *ctx)
  */
 void device_unavailable(Context *ctx)
 {
-	fprintf(stderr, " main: Disasociated\n");
+	//fprintf(stderr, " main: Disasociated\n");
+	DEBUG(" main: Disasociated\n");
 }
 
 /**
@@ -99,7 +102,8 @@ void device_unavailable(Context *ctx)
  */
 void device_connected(Context *ctx, const char *addr)
 {
-	fprintf(stderr, "main: Connected\n");
+	//fprintf(stderr, "main: Connected\n");
+	DEBUG("main: Connected\n");
 
 	// ok, make it proceed with association
 	// (agent has the initiative)

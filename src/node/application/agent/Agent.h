@@ -14,6 +14,7 @@ extern "C" {
 #include "specializations/basic_ECG.h"
 #include "ieee11073.h"
 #include "agent.h"
+#include "util/log.h"
 }
 
 #include "VirtualApplication.h"
@@ -22,15 +23,9 @@ extern "C" {
 #include "global.h"
 #include "sample_agent_common.h"
 
-//#include <simtime.h>
-//#include <iostream>
-//#include <string>
-//#include <csignal>
-//#include <cstdlib>
-
 using namespace std;
 
-#define RC_COUNT 3 //number of retransmissions tries
+#define RC_COUNT 3 //number of retransmissions tries in associaton machine state
 
 enum AgentTimers {
 	SEND_PACKET = 1,
@@ -45,7 +40,8 @@ class Agent : public VirtualApplication {
 	double startupDelay;
 	double delayLimit;
 	double reading_rate;
-	float packet_spacing;
+	double maxSimTime;
+	float packet_spacing;//not used
 	float data_spacing;
 	int dataSN;
 	int recipientId;
@@ -55,6 +51,9 @@ class Agent : public VirtualApplication {
 	int total_sec;
 	int RC;
 	int numNodes;
+	int numOfRetransmissions;
+	int maxNumOfRetransmition;
+	int isTheFirstAssociation;
 	bool confirmed_event;
 	unsigned int my_plugin_number;
 	unsigned int opt;
@@ -76,6 +75,8 @@ class Agent : public VirtualApplication {
 	void timerFiredCallback(int);
 	void finishSpecific();
 	MyPacket* createDataPacket(int seqNum);
+	void tryNewAssociation(void);
+	void retransmitPacket(void);
 
  public:
 	int getPacketsSent(int addr) { return packetsSent[addr]; }

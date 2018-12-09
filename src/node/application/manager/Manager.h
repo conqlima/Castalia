@@ -14,7 +14,7 @@ extern "C" {
 #include "MyPacket_m.h"
 #include "m_plugin_castalia.h"
 #include "m_global.h"
-//#include "Agent.h"
+#include "Agent.h"
 
 //#include <iostream>
 //#include <string>
@@ -55,6 +55,7 @@ class Manager : public VirtualApplication {
 	void timerFiredCallback(int);
 	void finishSpecific();
 	MyPacket* createDataPacket(int seqNum);
+	void retransmitPacket(int nodeNumber);
 
  public:
 	int getPacketsSent(int addr) { return packetsSent[addr]; }

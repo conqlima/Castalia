@@ -12,7 +12,7 @@ simple Agent like node.application.iApplication
 		double reading_rate = default(4);
 		string time_limit = default("");
 		bool confirmed_event = default(false);
-		
+		int maxNumOfRetransmition = default(3);
 		
 		//copied from ThroughputTest.ned
 		

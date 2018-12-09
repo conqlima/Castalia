@@ -22,6 +22,7 @@ int HUBNODE;
 void Agent::startup()
 {
 	HUBNODE = par("hubNode");
+	maxNumOfRetransmition = par("maxNumOfRetransmition");
 	confirmed_event = par("confirmed_event");
 	packet_rate = par("packet_rate");
 	packet_rate = par("packet_rate");
@@ -35,21 +36,28 @@ void Agent::startup()
 	reading_rate = par("reading_rate");// var de controle para enviar dados
 	RC = RC_COUNT;// retry count for timeouts
 	last_packet = -1;// control duplicate packets
+	numOfRetransmissions = 0; //control var for retransmission of data packet
+	
+	/*the node number*/
+	nodeNumber = atoi(SELF_NETWORK_ADDRESS);
 	
 	/*take sim-time-limit in string format*/
-	time_limit = par("time_limit").stringValue();
+	//time_limit = par("time_limit").stringValue();
 	/*convert sim-time-limit to simtime_t format*/
-	simtime_t t = STR_SIMTIME(time_limit.c_str());
+	//simtime_t t = STR_SIMTIME(time_limit.c_str());
 	/*convert sim-time-limit to seconds*/
-	total_sec = t.inUnit(SIMTIME_S);//startup delay is not part of simulations
-	total_sec = total_sec - startupDelay;//startup delay is not part of simulations
+	//total_sec = t.inUnit(SIMTIME_S);
+	
+	cConfigOption simTimeConfig("sim-time-limit", true, cConfigOption::Type::CFG_DOUBLE, "s", "300", "");
+	maxSimTime = cSimulation::getActiveSimulation()->getEnvir()->getConfig()->getAsDouble(&simTimeConfig);
+	
+	maxSimTime = maxSimTime - startupDelay;//startup delay is not part of simulations
 	/*calculate the total of events reports (measurements)*/
-	alarmt = (int) (total_sec*reading_rate);
+	alarmt = (int) (maxSimTime*reading_rate);
 	/*calculate the time spacing between measurements*/
 	data_spacing = reading_rate > 0 ? 1.0 / reading_rate : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 
 	/*total number of nodes*/
-	//numNodes = getParentModule()->getParentModule()->par("numNodes");
 	numNodes = getNumberOfNodes();
 	
 	/*creates a Tmsg for each agent*/
@@ -77,8 +85,7 @@ void Agent::startup()
 		throw cRuntimeError("Invalid application name in node %s", SELF_NETWORK_ADDRESS);
 	}
 	
-	/*the node number*/
-	nodeNumber = atoi(SELF_NETWORK_ADDRESS);
+
 	
 	SETTIMER[nodeNumber] = 0;
 	
@@ -103,38 +110,44 @@ void Agent::startup()
 	CommunicationPlugin *plugins[] = {&comm_plugin[nodeNumber], 0};
 
 	if (opt == 2) { /* Blood Pressure */
-		fprintf(stderr, "Starting Blood Pressure Agent\n");
+		//fprintf(stderr, "Starting Blood Pressure Agent\n");
+		DEBUG("Starting Blood Pressure Agent\n");
 		event_report_cb = blood_pressure_event_report_cb;
 		specialization = 0x02BC;
 		if (confirmed_event)
 		event_conf_or_unconf_blood_pressure = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	} else if (opt == 3) { /* Weight Scale */
-		fprintf(stderr, "Starting Weight Scale Agent\n");
+		//fprintf(stderr, "Starting Weight Scale Agent\n");
+		DEBUG("Starting Weight Scale Agent\n");
 		event_report_cb = weightscale_event_report_cb;
 		specialization = 0x05DC;
 		if (confirmed_event)
 		event_conf_or_unconf_weighting_scale = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	} else if (opt == 4) { /* Glucometer */
-		fprintf(stderr, "Starting Glucometer Agent\n");
+		//fprintf(stderr, "Starting Glucometer Agent\n");
+		DEBUG("Starting Glucometer Agent\n");
 		event_report_cb = glucometer_event_report_cb;
 		specialization = 0x06A4;
 		if (confirmed_event)
 		event_conf_or_unconf_glucometer = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	} else if (opt == 5) { /* Thermometer */
-		fprintf(stderr, "Starting Thermometer Agent\n");
+		//fprintf(stderr, "Starting Thermometer Agent\n");
+		DEBUG("Starting Thermometer Agent\n");
 		event_report_cb = thermometer_event_report_cb;
 		specialization = 0x0320;
 		if (confirmed_event)
 		event_conf_or_unconf_thermometer = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	}else if (opt == 6) { /* basic ECG */
-		fprintf(stderr, "Starting Basic ECG Agent\n");
+		//fprintf(stderr, "Starting Basic ECG Agent\n");
+		DEBUG("Starting Basic ECG Agent\n");
 		event_report_cb = basic_ECG_event_report_cb;
 		//specialization = 0x0258;
 		specialization = 0x4000;
 		if (confirmed_event)
 		event_conf_or_unconf_basic_ecg = ROIV_CMIP_CONFIRMED_EVENT_REPORT_CHOSEN;
 	}else { /* Default Pulse Oximeter */
-		fprintf(stderr, "Starting Pulse Oximeter Agent\n");
+		//fprintf(stderr, "Starting Pulse Oximeter Agent\n");
+		DEBUG("Starting Pulse Oximeter Agent\n");
 		event_report_cb = oximeter_event_report_cb;
 		// change to 0x0191 if you want timestamps
 		specialization = 0x0190;
@@ -160,22 +173,29 @@ void Agent::startup()
 	listener.device_unavailable = &device_unavailable;
 
 	agent_add_listener(CONTEXT_ID, listener);
+	
+	/*clean up the controlPacket and MeasurementPacket
+	* map variables from plugin_castalia.cc file*/
+	clearVarMap();
 
 	/*agent takes the iniciative to associate*/
+	if (data_spacing != -1){
 	agent_start(CONTEXT_ID);
 	dataSN++;
 	setTimer(SEND_PACKET, 0 + startupDelay);
+	
+	/*number of associations made*/
+	isTheFirstAssociation = 0;
 	
 	/*variables used in finishSpecific*/
 	packetsSent.clear();
 	packetsReceived.clear();
 	bytesReceived.clear();
 	
-	/*clean up the controlPacket and MeasurementPacket
-	* map variables from plugin_castalia.cc file*/
-	clearVarMap();
-	
 	declareOutput("Packets received per node");
+	}else{
+	throw cRuntimeError("Invalid reading_rate value: %d", reading_rate);
+	}
 
 }
 
@@ -268,9 +288,10 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 					agent_send_data(CONTEXT_ID);
 					dataSN++;
 					
-					if (alarmt == (int)((total_sec*reading_rate)))
-					setTimer(SEND_PACKET, 0);// the first measurement
-					else
+					if (getNumberOfAssociationsTotal(nodeNumber) > isTheFirstAssociation){
+					setTimer(SEND_PACKET, 0);// the first measurement send after a association
+					isTheFirstAssociation = getNumberOfAssociationsTotal(nodeNumber);
+					}else
 					setTimer(SEND_PACKET, data_spacing);
 					
 					--alarmt;
@@ -352,15 +373,13 @@ void Agent::timerFiredCallback(int index)
 						SETTIMER[nodeNumber] = 0;
 					}else {//unconfirmed event chosen
 							st_msg[nodeNumber].tam_buff = 0;
-							//free(st_msg[nodeNumber].buff_msg);
-							//st_msg[nodeNumber].buff_msg = NULL;
 							st_msg[nodeNumber].buff_msgSed.clear();
 						/*Verifica se o agente já pode enviar leituras*/
 						if (ctx->fsm->state == fsm_state_operating && alarmt > 0) {
 							agent_send_data(CONTEXT_ID);
+							--alarmt;
 							dataSN++;
 							setTimer(SEND_PACKET, data_spacing);
-							--alarmt;
 						}else if (alarmt == 0) {
 							agent_request_association_release(CONTEXT_ID);
 							--alarmt;
@@ -375,17 +394,15 @@ void Agent::timerFiredCallback(int index)
 				}
 				default: break;
 			}
-
 			break;
 		}
 		
 		case TO_ASSOC:{
-			/*request association tried 3 time and a 
-			 * request association was not received*/
+			/*request association 3 times, after the 
+			 * tries, abort.
+			 * */
 			if (RC == 0) {
 				st_msg[nodeNumber].tam_buff = 0;
-				//free(st_msg[nodeNumber].buff_msg);
-				//st_msg[nodeNumber].buff_msg = NULL;
 				st_msg[nodeNumber].buff_msgSed.clear();
 				trace() << "response not received for packet #" << dataSN << " in association mode aborting...";
 				dataSN++;
@@ -397,44 +414,66 @@ void Agent::timerFiredCallback(int index)
 				toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
 				packetsSent[recipientId]++;
 			}else {//resend the packet (max of 3 times)
-				trace() << "resending packet #" << dataSN;//sequence number
-				while(!st_msg[nodeNumber].msgType.empty()){
-					trace() << "type: " << st_msg[nodeNumber].msgType.front();
-					st_msg[nodeNumber].msgType.pop();
-				}
-				toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
-				packetsSent[recipientId]++;
-				setTimer(TO_ASSOC, 10);
+				//fazer a chamada da função aqui
+				//trace() << "resending packet #" << dataSN;//sequence number
+				//while(!st_msg[nodeNumber].msgType.empty()){
+					//trace() << "type: " << st_msg[nodeNumber].msgType.front();
+					//st_msg[nodeNumber].msgType.pop();
+				//}
+				//toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
+				//packetsSent[recipientId]++;
+				retransmitPacket();
 				RC--;
+				setTimer(TO_ASSOC, 10);
 			}
 			break;
 		}
 		
 		case TO_OPERA:{
 				trace() << "response not received for packet #" << dataSN << " in operating mode";
-
-				st_msg[nodeNumber].tam_buff = 0;
-				st_msg[nodeNumber].buff_msgSed.clear();
-				dataSN++;
-				agent_request_association_abort(CONTEXT_ID);
-				while(!st_msg[nodeNumber].msgType.empty()){
-					trace() << "type: " << st_msg[nodeNumber].msgType.front();
-					st_msg[nodeNumber].msgType.pop();
-				}
-				toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
-				packetsSent[recipientId]++;
 				
-				if (alarmt > 0){
-				cancelTimer(SEND_PACKET);
-				cancelTimer(TO_ASSOC);
-				cancelTimer(TO_OPERA);
-				st_msg[nodeNumber].tam_buff = 0;
-				st_msg[nodeNumber].buff_msgSed.clear();
-				dataSN++;
-				service_init(ctx);
-				agent_associate(CONTEXT_ID);
-				setTimer(SEND_PACKET, 0);
+				/*retransmission of packets in the 
+				 * application layer is not 
+				 * discussed in 11073 standard, 
+				 * this is an independent modification. 
+				 * */
+				if(numOfRetransmissions < maxNumOfRetransmition){
+				retransmitPacket();
+				numOfRetransmissions++;
+				setTimer(TO_OPERA, 3);
+				}else{//ABORT and try a new association
+					tryNewAssociation();
 				}
+				
+				/*Uncomment this function call to
+				 * try a new association after an ACK
+				 * is not received from manager. Read:
+				 * 8.4.3 Timeout variables, pg 75, Optimized exchange protoco 11073
+				 * */
+				//tryNewAssociation();
+				
+				//st_msg[nodeNumber].tam_buff = 0;
+				//st_msg[nodeNumber].buff_msgSed.clear();
+				//dataSN++;
+				//agent_request_association_abort(CONTEXT_ID);
+				//while(!st_msg[nodeNumber].msgType.empty()){
+					//trace() << "type: " << st_msg[nodeNumber].msgType.front();
+					//st_msg[nodeNumber].msgType.pop();
+				//}
+				//toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
+				//packetsSent[recipientId]++;
+				
+				//if (alarmt > 0){
+				//cancelTimer(SEND_PACKET);
+				//cancelTimer(TO_ASSOC);
+				//cancelTimer(TO_OPERA);
+				//st_msg[nodeNumber].tam_buff = 0;
+				//st_msg[nodeNumber].buff_msgSed.clear();
+				//dataSN++;
+				//service_init(ctx);
+				//agent_associate(CONTEXT_ID);
+				//setTimer(SEND_PACKET, 0);
+				//}
 			break;
 		}
 	}
@@ -457,6 +496,7 @@ void Agent::finishSpecific() {
 	declareOutput("Packets loss rate");
 	declareOutput("Control Packets");
 	declareOutput("Measurement Packets");
+	declareOutput("Total of associations");
 
 	cTopology *topo;	// temp variable to access packets received by other nodes
 	topo = new cTopology("topo");// instancia um objeto da classe cTopology e envia como parametro a palavra topo
@@ -481,6 +521,7 @@ void Agent::finishSpecific() {
 	}
 	collectOutput("Control Packets", HUBNODE, "total", getControlPacketsTotal(nodeNumber));
 	collectOutput("Measurement Packets", HUBNODE, "total", getMeasurementPacketsTotal(nodeNumber));
+	collectOutput("Total of associations", HUBNODE, "total", getNumberOfAssociationsTotal(nodeNumber));
 
 	delete(topo);
 
@@ -528,6 +569,7 @@ void Agent::tryNewAssociation(void)
 	Context *ctx;
 	CONTEXT_ID = {my_plugin_number, 0};
 	ctx = context_get_and_lock(CONTEXT_ID);
+				trace() << "response not received for packet #" << dataSN << " aborting...";
 				dataSN++;
 				agent_request_association_abort(CONTEXT_ID);
 				while(!st_msg[nodeNumber].msgType.empty()){
@@ -544,6 +586,7 @@ void Agent::tryNewAssociation(void)
 				st_msg[nodeNumber].tam_buff = 0;
 				st_msg[nodeNumber].buff_msgSed.clear();
 				dataSN++;
+				trace() << "trying new association";
 				service_init(ctx);
 				agent_associate(CONTEXT_ID);
 				setTimer(SEND_PACKET, 0);
@@ -553,18 +596,19 @@ void Agent::tryNewAssociation(void)
 
 void Agent::retransmitPacket(void)
 {
-	Context *ctx;
-	CONTEXT_ID = {my_plugin_number, 0};
-	ctx = context_get_and_lock(CONTEXT_ID);
-			//if(numOfRetransmissions < MAXNUMOFRETRANSMISSIONS)
+	//Context *ctx;
+	//CONTEXT_ID = {my_plugin_number, 0};
+	//ctx = context_get_and_lock(CONTEXT_ID);
+			//if(numOfRetransmissions < maxNumOfRetransmition){
 				trace() << "resending packet #" << dataSN;//sequence number
-				while(!st_msg[nodeNumber].msgType.empty()){
-					trace() << "type: " << st_msg[nodeNumber].msgType.front();
-					st_msg[nodeNumber].msgType.pop();
-				}
+				//while(!st_msg[nodeNumber].msgType.empty()){
+					//trace() << "type: " << st_msg[nodeNumber].msgType.front();
+					//st_msg[nodeNumber].msgType.pop();
+				//}
 				toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
 				packetsSent[recipientId]++;
-				//numOfRetransmissions--;
-				/*criar controle de retransmissão*/
-	context_unlock(ctx);
+				//numOfRetransmissions++;
+				
+			//}
+	//context_unlock(ctx);
 }

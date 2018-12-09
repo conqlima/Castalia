@@ -63,7 +63,6 @@ extern "C" {
 //#include <cstdarg>
 //#include <unistd.h>
 //#include <fcntl.h>
-#include <map>
 #include <netinet/in.h>
 
 // #define TEST_FRAGMENTATION 1
@@ -770,6 +769,7 @@ int m_plugin_network_castalia_manager_setup(CommunicationPlugin *plugin, int ppo
 
 int m_getControlPacketsTotal(int addr){return m_controlPackets[addr];}
 int m_getMeasurementPacketsTotal(int addr){return m_measurementPackets[addr];}
+
 void m_clearVarMap(void){
 	m_controlPackets.clear();
 	m_measurementPackets.clear();

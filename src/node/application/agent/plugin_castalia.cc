@@ -83,6 +83,7 @@ static int buffer_retry = -1;
 
 static std::map<long,int> controlPackets;
 static std::map<long,int> measurementPackets;
+static std::map<long,int> numberOfAssociations;
 
 
 using namespace std;
@@ -163,6 +164,7 @@ static void message_type(intu8 * buffer, int size, Context* ctx){
 	case AARQ_CHOSEN:
 		st_msg[nodeId].msgType.push("Association Request");
 		controlPackets[nodeId]++;
+		numberOfAssociations[nodeId]++;
 		break;
 	case AARE_CHOSEN:
 		st_msg[nodeId].msgType.push("Association Response");
@@ -492,12 +494,16 @@ int plugin_network_castalia_agent_setup(CommunicationPlugin *plugin, int pport)
 
 int getControlPacketsTotal(int addr){return controlPackets[addr];}
 int getMeasurementPacketsTotal(int addr){return measurementPackets[addr];}
+int getNumberOfAssociationsTotal(int addr){return numberOfAssociations[addr];}
+
 void clearVarMap(void){
 	static int control = 0;
-	/*clean up the control var every 5 initialization*/
+	/*clean up the control var every 5 initialization.
+	 * Because we have 5 agents*/
 	if ((control % 5) == 0){
 	controlPackets.clear();
 	measurementPackets.clear();
+	numberOfAssociations.clear();
 	control = 0;
 	}
 	control++;

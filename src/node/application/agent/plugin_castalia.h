@@ -40,6 +40,7 @@ extern "C" {
 int plugin_network_castalia_agent_setup(CommunicationPlugin *plugin, int port);
 int getControlPacketsTotal(int addr);
 int getMeasurementPacketsTotal(int addr);
+int getNumberOfAssociationsTotal(int addr);
 void clearVarMap(void);
 
 #endif /*_PLUGIN_CASTALIA_H_*/

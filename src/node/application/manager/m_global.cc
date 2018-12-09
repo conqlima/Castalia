@@ -27,6 +27,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "util/log.h"
 }
 
 //#include <cstdio>
@@ -65,7 +66,8 @@ static std::map<long,int> first_association;
  */
 void m_device_unavailable(Context *ctx)
 {
-	fprintf(stderr, " main: Disasociated\n");
+	//fprintf(stderr, " main: Disasociated\n");
+	DEBUG(" main: Disasociated\n");
 }
 
 /**
@@ -77,13 +79,16 @@ void m_device_unavailable(Context *ctx)
  */
 void new_data_received(Context *ctx, DataList *list)
 {
-	fprintf(stderr, "Medical Device Data Updated:\n");
+	//fprintf(stderr, "Medical Device Data Updated:\n");
+	DEBUG("Medical Device Data Updated:\n");
 
 	char *data = json_encode_data_list(list);
 
 	if (data != NULL) {
-		fprintf(stderr, "%s", data);
-		fprintf(stderr, "\n");
+		//fprintf(stderr, "%s", data);
+		DEBUG("%s", data);
+		//fprintf(stderr, "\n");
+		DEBUG("\n");
 
 		fflush(stderr);
 		free(data);
@@ -98,11 +103,14 @@ void new_data_received_test(Context *ctx, Request *r, DATA_apdu *response_apdu)
 	DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
 	char *data = json_encode_data_list(list);
 
-	fprintf(stderr, "Medical Device Data Updated:\n");
+	//fprintf(stderr, "Medical Device Data Updated:\n");
+	DEBUG("Medical Device Data Updated:\n");
 
 	if (data != NULL) {
-		fprintf(stderr, "%s", data);
-		fprintf(stderr, "\n");
+		//fprintf(stderr, "%s", data);
+		DEBUG("%s", data);
+		//fprintf(stderr, "\n");
+		DEBUG("\n");
 
 		fflush(stderr);
 	}
@@ -120,13 +128,16 @@ void new_data_received_test(Context *ctx, Request *r, DATA_apdu *response_apdu)
  */
 void device_associated(Context *ctx, DataList *list)
 {
-	fprintf(stderr, " Medical Device System Associated:\n");
+	//fprintf(stderr, " Medical Device System Associated:\n");
+	DEBUG(" Medical Device System Associated:\n");
 
 	char *data = json_encode_data_list(list);
 
 	if (data != NULL) {
-		fprintf(stderr, "%s", data);
-		fprintf(stderr, "\n");
+		//fprintf(stderr, "%s", data);
+		DEBUG("%s", data);
+		//fprintf(stderr, "\n");
+		DEBUG("\n");
 
 		fflush(stderr);
 		free(data);
@@ -135,7 +146,7 @@ void device_associated(Context *ctx, DataList *list)
 	 * association*/
 	if (first_association[ctx->id.plugin] == 0){
 	device_reqmdsattr();
-	first_association[ctx->id.plugin]++;
+	//first_association[ctx->id.plugin]++;
 	}
 }
 
@@ -151,18 +162,23 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
 	DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
 	char *data = json_encode_data_list(list);
 
-	fprintf(stderr, "Print device attributes:\n");
+	//fprintf(stderr, "Print device attributes:\n");
+	DEBUG("Print device attributes:\n");
 
 	if (data != NULL) {
-		fprintf(stderr, "%s", data);
-		fprintf(stderr, "\n");
+		//fprintf(stderr, "%s", data);
+		DEBUG("%s", data);
+		//fprintf(stderr, "\n");
+		DEBUG("\n");
 
 		fflush(stderr);
 	}
 
 	data_list_del(list);
 	free(data);
-	
+	/*OK, attributes received, we do not need retrieve
+	them anymore */
+	first_association[ctx->id.plugin]++;
 	//device_reqdata();
 }
 
@@ -172,13 +188,15 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
  */
 void device_reqmdsattr()
 {
-	fprintf(stderr, "device_reqmdsattr\n");
+	//fprintf(stderr, "device_reqmdsattr\n");
+	DEBUG("device_reqmdsattr\n");
 	manager_request_get_all_mds_attributes(m_CONTEXT_ID, print_device_attributes);
 }
 
 void device_reqdata()
 {
-	fprintf(stderr, "device_reqdata\n");
+	//fprintf(stderr, "device_reqdata\n");
+	DEBUG("device_reqdata\n");
 	manager_request_measurement_data_transmission(m_CONTEXT_ID, new_data_received_test);
 }
 

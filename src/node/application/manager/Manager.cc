@@ -17,7 +17,8 @@ void Manager::startup()
 	numNodes = getParentModule()->getParentModule()->par("numNodes");
 
 	/*codes from sample_manager.c*/
-	fprintf(stderr, "\nIEEE 11073 Sample application\n");
+	//fprintf(stderr, "\nIEEE 11073 Sample application\n");
+	//DEBUG("\nIEEE 11073 Sample application\n");
 
 	/*creates a Tmsg struct for each node*/
 	if (m_st_msg == NULL)
@@ -60,8 +61,8 @@ void Manager::startup()
 			unsigned int nodeId = i/2;
 			m_comm_plugin[nodeId] = communication_plugin();
 			m_castalia_mode(nodeId);
-			fprintf(stderr, "\nIEEE 11073 Sample application\n");
-			
+			//fprintf(stderr, "\nIEEE 11073 Sample application\n");
+			DEBUG("\nIEEE 11073 Sample application\n");
 			m_comm_plugin[nodeId].timer_count_timeout = m_timer_count_timeout;
 			m_comm_plugin[nodeId].timer_reset_timeout = m_timer_reset_timeout;
 			
@@ -103,11 +104,15 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 	int sequenceNumber = rcvPacket->getSequenceNumber();
 	
 	unsigned int sourceId = atoi(source);
-
+	
+	/*The reason to have the vars recipientAddress and
+	 * recipientId (both with global scope) is to use
+	 * them outside of this function.  
+	 * */
 	recipientAddress = source;
-
+	recipientId = sourceId;
 	if (sequenceNumber != last_packet[sourceId]) {
-		recipientId = sourceId;
+		
 		/*Checks if there is a activated timeout for some agent*/
 		Context *ctx;
 		my_plugin_number = sourceId*2;
@@ -199,6 +204,10 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 			fwdPacket->setByteLength(0);
 			toNetworkLayer(fwdPacket, recipientAddress.c_str());
 		}
+	}else if (sequenceNumber == last_packet[sourceId]) {//retransmit the last packet send
+		my_plugin_number = sourceId*2;
+		m_CONTEXT_ID = {my_plugin_number, 0};
+		retransmitPacket(sourceId);
 	}
 }
 
@@ -269,7 +278,7 @@ void Manager::finishSpecific() {
 	long bytesDelivered = 0;
 	for (unsigned int i = 0; i < numNodes; i++) {
 		//tenta converter a variável topo (que é do tipo cTopology para uma variável do tipo Manager em tempo de execução)
-		Manager *appModule = dynamic_cast<Manager*>
+		Agent *appModule = dynamic_cast<Agent*>
 			(topo->getNode(i)->getModule()->getSubmodule("Application"));
 		if (appModule) {
 			int packetsSent = appModule->getPacketsSent(self);
@@ -282,7 +291,6 @@ void Manager::finishSpecific() {
 		}
 		collectOutput("Control Packets", i, "total", m_getControlPacketsTotal(i));
 		collectOutput("Measurement Packets", i, "total", m_getMeasurementPacketsTotal(i));
-
 	}
 
 	delete(topo);
@@ -314,14 +322,22 @@ void Manager::finishSpecific() {
 MyPacket* Manager::createDataPacket(int seqNum)
 {
 	MyPacket *pkt = new MyPacket("mypacket", APPLICATION_PACKET);
+	int nodeNumber = my_plugin_number/2;
 	//size of buff
-	pkt->setBuffArraySize(m_st_msg[my_plugin_number/2].tam_buff);
-	for (int i = 0; i < m_st_msg[my_plugin_number/2].tam_buff; i++)
+	pkt->setBuffArraySize(m_st_msg[nodeNumber].tam_buff);
+	for (int i = 0; i < m_st_msg[nodeNumber].tam_buff; i++)
 	{
-		pkt->setBuff(i,m_st_msg[my_plugin_number/2].buff_msgSed[i]);
+		pkt->setBuff(i,m_st_msg[nodeNumber].buff_msgSed[i]);
 	}
-	pkt->setTam_buff(m_st_msg[my_plugin_number/2].tam_buff);
+	pkt->setTam_buff(m_st_msg[nodeNumber].tam_buff);
 	pkt->setSequenceNumber(seqNum);
-	pkt->setByteLength(pkt->getBuffArraySize() + sizeof(m_st_msg[my_plugin_number/2].tam_buff));
+	pkt->setByteLength(pkt->getBuffArraySize() + sizeof(m_st_msg[nodeNumber].tam_buff));
 	return pkt;
+}
+
+void Manager::retransmitPacket(int nodeNumber)
+{
+	trace() << "resending packet #" << dataSN[nodeNumber];//sequence number
+	toNetworkLayer(createDataPacket(dataSN[nodeNumber]), recipientAddress.c_str());
+	packetsSent[recipientId]++;
 }
