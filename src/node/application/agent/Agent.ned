@@ -9,10 +9,12 @@ simple Agent like node.application.iApplication
 		int constantDataPayload = default(16);	// in bytes
 		
 		string application_type = default("pulseoximeter"); // agent types
-		double reading_rate = default(4);
-		string time_limit = default("");
+		double reading_rate = default(4); // measurement per second
 		bool confirmed_event = default(false);
-		int maxNumOfRetransmition = default(3);
+		int maxNumOfRetransmition = default(3); // max Number of retransmission of
+												// measurement packets
+		int hubNode = default (0);		// explict the hub (sink node) node number
+		bool retransmissionPacket = default(false);
 		
 		//copied from ThroughputTest.ned
 		
@@ -23,7 +25,6 @@ simple Agent like node.application.iApplication
 												// application-level static routing. This way we can
 												// have a multi-hop throughput test   
 
-		int hubNode = default (0);				// explict the hub (sink node) node number
 		double packet_rate = default (0);		// packets per second, by default we transmit no packets
 		double startupDelay = default (0);		// delay in seconds before the app stars producing packets
 

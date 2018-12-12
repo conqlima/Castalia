@@ -22,67 +22,87 @@ extern "C" {
 #include "plugin_castalia.h"
 #include "global.h"
 #include "sample_agent_common.h"
+#include "Manager.h"
 
 using namespace std;
 
-#define RC_COUNT 3 //number of retransmissions tries in associaton machine state
+/**
+ * Number of retransmissions tries in associaton mode.
+ * See section: 8.4.3 Timeout variables,
+ * Optimized exchange protocol - 2016, page 75.
+ */
+#define RC_COUNT 3
 
-enum AgentTimers {
-	SEND_PACKET = 1,
-	TO_ASSOC,
-	TO_OPERA
+enum AgentTimers
+{
+    SEND_PACKET = 1,
+    TO_ASSOC,
+    TO_OPERA
 };
 
-class Agent : public VirtualApplication {
-	
- private:
-	double packet_rate;
-	double startupDelay;
-	double delayLimit;
-	double reading_rate;
-	double maxSimTime;
-	float packet_spacing;//not used
-	float data_spacing;
-	int dataSN;
-	int recipientId;
-	int alarmt;
-	int last_packet;
-	int specialization;
-	int total_sec;
-	int RC;
-	int numNodes;
-	int numOfRetransmissions;
-	int maxNumOfRetransmition;
-	int isTheFirstAssociation;
-	bool confirmed_event;
-	unsigned int my_plugin_number;
-	unsigned int opt;
-	unsigned int nodeNumber;
-	string recipientAddress;
-	string application_name;
-	string time_limit;
-	void* (*event_report_cb)();
-	
-	//variables below are used to determine the packet delivery rates.	
-	map<long,int> packetsReceived;
-	map<long,int> bytesReceived;
-	map<long,int> packetsSent;
+class Agent : public VirtualApplication
+{
 
- protected:
-	void startup();
-	void fromNetworkLayer(ApplicationPacket *, const char *, double, double);
-	void handleRadioControlMessage(RadioControlMessage *);
-	void timerFiredCallback(int);
-	void finishSpecific();
-	MyPacket* createDataPacket(int seqNum);
-	void tryNewAssociation(void);
-	void retransmitPacket(void);
+private:
+    double packet_rate;//not used
+    double startupDelay;
+    double delayLimit;
+    double reading_rate;
+    double maxSimTime;
+    float packet_spacing;
+    float data_spacing;
+    int dataSN;
+    int recipientId;
+    int alarmt;
+    int last_packet;
+    int specialization;
+    int RC;
+    int numNodes;
+    int numOfRetransmissions;
+    int maxNumOfRetransmition;
+    int isTheFirstAssociation;
+    bool confirmed_event;
+    bool retransmissionPacket;
+    unsigned int my_plugin_number;
+    unsigned int opt;
+    unsigned int nodeNumber;
+    string recipientAddress;
+    string application_name;
+    void* (*event_report_cb)();
+    MyPacket *pktGlobal;
 
- public:
-	int getPacketsSent(int addr) { return packetsSent[addr]; }
-	int getPacketsReceived(int addr) { return packetsReceived[addr]; }
-	int getBytesReceived(int addr) { return bytesReceived[addr]; }
-	int getNumberOfNodes() { return getParentModule()->getParentModule()->par("numNodes");}
+    //variables below are used to determine the packet delivery rates.
+    map<long,int> packetsReceived;
+    map<long,int> bytesReceived;
+    map<long,int> packetsSent;
+
+protected:
+    void startup();
+    void fromNetworkLayer(ApplicationPacket *, const char *, double, double);
+    void handleRadioControlMessage(RadioControlMessage *);
+    void timerFiredCallback(int);
+    void finishSpecific();
+    MyPacket* createDataPacket(int seqNum);
+    void tryNewAssociation(void);
+    void retransmitPacket(void);
+
+public:
+    int getPacketsSent(int addr)
+    {
+        return packetsSent[addr];
+    }
+    int getPacketsReceived(int addr)
+    {
+        return packetsReceived[addr];
+    }
+    int getBytesReceived(int addr)
+    {
+        return bytesReceived[addr];
+    }
+    int getNumberOfNodes()
+    {
+        return getParentModule()->getParentModule()->par("numNodes");
+    }
 
 };
 
