@@ -21,11 +21,15 @@ void Agent::startup()
 {
     HUBNODE = par("hubNode");
     retransmissionPacket = par("retransmissionPacket");
+    timeOutToRetransmitPacket = par("timeOutToRetransmitPacket");
     maxNumOfRetransmition = par("maxNumOfRetransmition");
     confirmed_event = par("confirmed_event");
     packet_rate = par("packet_rate");
+    
+    //This will be always the hub
     recipientAddress = par("nextRecipient").stringValue();
     recipientId = atoi(recipientAddress.c_str());
+    
     startupDelay = par("startupDelay");
     delayLimit = par("delayLimit");
     application_name = par("application_type").stringValue();
@@ -296,7 +300,7 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                 collectOutput("Packets received per node", sourceId);
                 packetsReceived[sourceId]++;
                 bytesReceived[sourceId] += rcvPacket->getByteLength();
-
+				
                 CONTEXT_ID = {my_plugin_number, 0};
                 ctx = context_get_and_lock(CONTEXT_ID);
 
@@ -501,7 +505,7 @@ void Agent::timerFiredCallback(int index)
         {
             retransmitPacket();
             numOfRetransmissions++;
-            setTimer(TO_OPERA, 3);
+            setTimer(TO_OPERA, timeOutToRetransmitPacket);
         }
         else  //try a new association
         {

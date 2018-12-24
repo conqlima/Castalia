@@ -13,6 +13,7 @@ simple Agent like node.application.iApplication
 		bool confirmed_event = default(false);
 		int maxNumOfRetransmition = default(3); // max Number of retransmission of
 												// measurement packets
+		double timeOutToRetransmitPacket = default(3);
 		int hubNode = default (0);		// explict the hub (sink node) node number
 		bool retransmissionPacket = default(false);
 		

@@ -49,6 +49,7 @@ private:
     double delayLimit;
     double reading_rate;
     double maxSimTime;
+    double timeOutToRetransmitPacket;
     float packet_spacing;
     float data_spacing;
     int dataSN;
