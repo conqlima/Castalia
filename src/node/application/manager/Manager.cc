@@ -100,8 +100,8 @@ void Manager::startup()
     last_packet.clear();
 
     declareOutput("Packets received per node");
-    declareOutput("Number of transmissions retries per packet");
-    declareHistogram("Application level latency, total", 0, 3500, 35);
+    //declareOutput("Number of transmissions retries per packet");
+    //declareHistogram("Application level latency, total", 0, 3500, 35);
 
 }
 
@@ -173,7 +173,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                 packetsReceived[sourceId]++;
                 bytesReceived[sourceId] += rcvPacket->getByteLength();
                 totalPacketsReceived++;
-                collectHistogram("Application level latency, total",1000 * (simTime() - rcvPacket->getCreationTime()).dbl());
+                //collectHistogram("Application level latency, total",1000 * (simTime() - rcvPacket->getCreationTime()).dbl());
 
                 if (m_st_msg[sourceId].tam_buff > 0)
                 {
@@ -192,7 +192,8 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                         m_st_msg[sourceId].msgType.pop();
 
                     }
-
+					
+					//an error occurred, cancel timers for the current node
                     if(m_ctx->fsm->state == fsm_state_unassociated)
                         cancelTimer(sourceId);
 
@@ -323,6 +324,8 @@ void Manager::finishSpecific()
             }
             bytesDelivered += appModule->getBytesReceived(self);
         }
+        //the manger does not received measurement from himself
+        if (i != atoi(SELF_NETWORK_ADDRESS))
         collectOutput("Measurement Packets Received", i, "", m_getMeasurementPacketsTotal(i));
     }
 
@@ -377,5 +380,5 @@ void Manager::retransmitPacket(int nodeNumber)
     trace() << "resending packet #" << dataSN[nodeNumber] << " to node " << nodeNumber;//sequence number
     toNetworkLayer(createDataPacket(dataSN[nodeNumber]), recipientAddress.c_str());
     packetsSent[recipientId]++;
-    collectOutput("Number of transmissions retries per packet", dataSN[nodeNumber]);//Adds one to the value of output name with index 3.
+    //collectOutput("Number of transmissions retries per packet", dataSN[nodeNumber]);//Adds one to the value of output name with index 3.
 }

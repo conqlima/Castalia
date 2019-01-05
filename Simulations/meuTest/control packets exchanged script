@@ -1,0 +1,11 @@
+#!/usr/bin/gnuplot
+set terminal png size 800,500 enhanced font "Helvetica,15"
+set output 'average control packets exchanged.png'
+set boxwidth 0.5
+set style fill solid
+set grid
+set ylabel "control packets"
+plot "controlpacketsexchanged.dat" using 2:xtic(1) \
+	with boxes \
+	notitle \
+	linecolor rgb "#4D4D4D"

@@ -1,0 +1,11 @@
+""       "successfully TX in unconfirmed mode"	"successfully TX in retransmission mode"		"successfully TX in confirmed mode" 		"Which should be transmitted"
+
+1		87.8				70.1					61.75 			100
+
+2		97.2				88.3					87.5			100
+
+3		2.75				4.1					4 			4
+           
+4		44.55				38.95					38.8			50
+
+5		110.85				70.15					62.25			125

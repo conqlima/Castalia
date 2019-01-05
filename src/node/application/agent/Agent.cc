@@ -228,7 +228,9 @@ void Agent::startup()
         bytesReceived.clear();
 
         declareOutput("Packets received per node");
-        declareOutput("Number of transmissions retries per packet");
+        //declareOutput("Number of transmissions retries per packet");
+        //declareHistogram("Application level latency, total", 0, 3500, 35);
+
     }
     else
     {
@@ -265,6 +267,7 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
 
         case fsm_state_operating:
         {
+			//collectHistogram("Application level latency, total",1000 * (simTime() - rcvPacket->getCreationTime()).dbl());
             if (getTimer(TO_OPERA) != 0)
                 cancelTimer(TO_OPERA);
             break;
@@ -426,6 +429,8 @@ void Agent::timerFiredCallback(int index)
             //Comfirmed event chosen
             if (SETTIMER[nodeNumber])
             {
+				//new measurement being transmited
+				numOfRetransmissions = 0;
                 setTimer(TO_OPERA, 3);
                 SETTIMER[nodeNumber] = 0;
             }
@@ -481,6 +486,7 @@ void Agent::timerFiredCallback(int index)
             }
             toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
             packetsSent[recipientId]++;
+            RC = RC_COUNT;
         }
         else   //Resend the packet (max of 3 times)
         {
@@ -510,6 +516,8 @@ void Agent::timerFiredCallback(int index)
         else  //try a new association
         {
             tryNewAssociation();
+            //reset the number of retrasmission
+            numOfRetransmissions = 0;
         }
         break;
     }
@@ -615,7 +623,8 @@ MyPacket* Agent::createDataPacket(int seqNum)
     pkt->setSequenceNumber(seqNum);
     pkt->setByteLength(pkt->getBuffArraySize() + sizeof(st_msg[nodeNumber].tam_buff));
     //Copy pkt to pktGlobal
-    pktGlobal = pkt->dup();
+    //pktGlobal = pkt->dup();
+    // = pkt->getCreationTime()).dbl();
     return pkt;
 }
 
@@ -624,7 +633,11 @@ void Agent::tryNewAssociation(void)
     Context *ctx;
     CONTEXT_ID = {my_plugin_number, 0};
     ctx = context_get_and_lock(CONTEXT_ID);
-    trace() << "response not received for packet #" << dataSN << " aborting...";
+    
+    st_msg[nodeNumber].tam_buff = 0;
+    st_msg[nodeNumber].buff_msgSed.clear();
+    
+    trace() << "response not received for packet #" << dataSN << " sending aborting message...";
     dataSN++;
     agent_request_association_abort(CONTEXT_ID);
     while(!st_msg[nodeNumber].msgType.empty())
@@ -640,21 +653,28 @@ void Agent::tryNewAssociation(void)
         cancelTimer(SEND_PACKET);
         cancelTimer(TO_ASSOC);
         cancelTimer(TO_OPERA);
+        
         st_msg[nodeNumber].tam_buff = 0;
         st_msg[nodeNumber].buff_msgSed.clear();
+        
         dataSN++;
         trace() << "trying new association";
         service_init(ctx);
         agent_associate(CONTEXT_ID);
         setTimer(SEND_PACKET, 0);
     }
+    
+    //reset the RC for the new association 
+    RC = RC_COUNT;
+    
     context_unlock(ctx);
 }
 
 void Agent::retransmitPacket(void)
 {
     trace() << "resending packet #" << dataSN<< " to node " << recipientAddress.c_str();
-    toNetworkLayer(pktGlobal, recipientAddress.c_str());
+    //toNetworkLayer(pktGlobal, recipientAddress.c_str());
+    toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
     packetsSent[recipientId]++;
-    collectOutput("Number of transmissions retries per packet", dataSN);
+    //collectOutput("Number of transmissions retries per packet", dataSN);
 }

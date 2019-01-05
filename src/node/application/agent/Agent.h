@@ -70,7 +70,7 @@ private:
     string recipientAddress;
     string application_name;
     void* (*event_report_cb)();
-    MyPacket *pktGlobal;
+    //MyPacket *pktGlobal;
 
     //variables below are used to determine the packet delivery rates.
     map<long,int> packetsReceived;
