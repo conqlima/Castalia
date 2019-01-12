@@ -6,8 +6,8 @@ set style histogram cluster gap 1
 set style fill solid border -1
 set boxwidth 0.9
 set grid
-set key top left
+set key top right
 set xlabel "nodes"
-set ylabel "measurement packets"
-plot "data.dat" using 2:xtic(1) ti col linecolor rgb "#000000",'' u 3 ti col linecolor rgb "#333333",'' u 4 ti col linecolor rgb "#666666",'' u 5 ti col linecolor rgb "#999999"
+set ylabel "delivered measurement packets (%)"
+plot "measurement packet received per node.dat" using 2:xtic(1) ti col linecolor rgb "#000000",'' u 3 ti col linecolor rgb "#333333",'' u 4 ti col linecolor rgb "#666666"
 
