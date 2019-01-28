@@ -9,5 +9,8 @@ set grid
 set key top left
 set xlabel "nodes"
 set ylabel "associations"
-plot "totalassociationsmade.dat" using 2:xtic(1) ti col linecolor rgb "#000000",'' u 3 ti col linecolor rgb "#333333",'' u 4 ti col linecolor rgb "#666666", '' using 0:2:3:4 with yerrorbars lc rgb 'black' pt 1 lw 2 notitle
+plot "totalassociationsmade.dat" using 2:xtic(1) ti col linecolor rgb "#000000", \
+	'' u 5 ti col linecolor rgb "#333333", \
+	'' u 8 ti col linecolor rgb "#666666", \
+	'' using 0:2:3:4 with yerrorbars lc rgb 'black' pt 1 lw 2 notitle
 
