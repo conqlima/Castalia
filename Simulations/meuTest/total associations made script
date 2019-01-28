@@ -2,15 +2,14 @@
 set terminal png size 800,500 enhanced font "Helvetica,15"
 set output 'average total associations made.png'
 set style data histogram
-set style histogram cluster gap 1
+set style histogram cluster gap 1 errorbars lw 1
 set style fill solid border -1
 set boxwidth 0.9
 set grid
 set key top left
 set xlabel "nodes"
 set ylabel "associations"
-plot "totalassociationsmade.dat" using 2:xtic(1) ti col linecolor rgb "#000000", \
-	'' u 5 ti col linecolor rgb "#333333", \
-	'' u 8 ti col linecolor rgb "#666666", \
-	'' using 0:2:3:4 with yerrorbars lc rgb 'black' pt 1 lw 2 notitle
+plot "totalassociationsmade.dat" using 2:3:xtic(1) title col(2), \
+			'' using 4:5  title col(4), \
+			'' using 6:7  title col(6)  
 
