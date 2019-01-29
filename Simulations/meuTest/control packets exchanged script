@@ -5,9 +5,8 @@ set boxwidth 0.5
 set style fill solid
 set grid
 set ylabel "control packets"
-plot "controlpacketsexchanged.dat" using 2:xtic(1) \
-	linecolor rgb "#4D4D4D" \
+plot "controlpacketsexchanged.dat" using 2:xtic(1) lc rgb "#4298D2" \
 	with boxes \
 	notitle, \
-	'' using 0:2:3:4 with yerrorbars lc rgb 'black' pt 1 lw 2 notitle
+	'' using 2:3 with yerrorbars lc rgb 'black' pt 1 lw 2 notitle
 	
