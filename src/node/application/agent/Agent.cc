@@ -228,7 +228,7 @@ void Agent::startup()
         bytesReceived.clear();
 
         declareOutput("Packets received per node");
-        //declareOutput("Number of transmissions retries per packet");
+        declareHistogram("Number of transmissions' retries per packet",0,10,10);
         //declareHistogram("Application level latency, total", 0, 3500, 35);
 
     }
@@ -420,8 +420,12 @@ void Agent::timerFiredCallback(int index)
         {
         case fsm_state_associating:
         {
-            if (RC)
+            if (RC){
+				if (retransmissionPacket)
+                setTimer(TO_ASSOC, timeOutToRetransmitPacket);//4
+                else
                 setTimer(TO_ASSOC, 10);
+            }
             break;
         }
         case fsm_state_operating:
@@ -430,8 +434,14 @@ void Agent::timerFiredCallback(int index)
             if (SETTIMER[nodeNumber])
             {
 				//new measurement being transmited
+				collectHistogram("Number of transmissions' retries per packet",numOfRetransmissions);
 				numOfRetransmissions = 0;
+                
+                if (retransmissionPacket)
+                setTimer(TO_OPERA, timeOutToRetransmitPacket);
+                else
                 setTimer(TO_OPERA, 3);
+                
                 SETTIMER[nodeNumber] = 0;
             }
             else   //Unconfirmed event chosen
@@ -492,6 +502,10 @@ void Agent::timerFiredCallback(int index)
         {
             retransmitPacket();
             RC--;
+            
+            if (retransmissionPacket)
+            setTimer(TO_ASSOC, timeOutToRetransmitPacket);//4
+            else
             setTimer(TO_ASSOC, 10);
         }
         break;
@@ -507,12 +521,14 @@ void Agent::timerFiredCallback(int index)
          * discussed in 11073 standard,
          * this is an independent modification.
          * */
+         //retransmissionMode
         if((numOfRetransmissions < maxNumOfRetransmition) && retransmissionPacket)
         {
             retransmitPacket();
             numOfRetransmissions++;
             setTimer(TO_OPERA, timeOutToRetransmitPacket);
         }
+        //confirmedMode
         else  //try a new association
         {
             tryNewAssociation();

@@ -100,9 +100,6 @@ void Manager::startup()
     last_packet.clear();
 
     declareOutput("Packets received per node");
-    //declareOutput("Number of transmissions retries per packet");
-    //declareHistogram("Application level latency, total", 0, 3500, 35);
-
 }
 
 void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
