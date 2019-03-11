@@ -46,7 +46,7 @@ with open('Measurement Packets Received.csv') as csv_file:
 	line_count = 0
 	next(csv_reader)
 	for row in csv_reader:
-		if line_count == 2:
+		if line_count == 3:
 			break;
 		y1.append(float(row[2]))
 		y1error.append(float(row[3]))
@@ -64,42 +64,37 @@ with open('Measurement Packets Received.csv') as csv_file:
 		y5error.append(float(row[15]))
 		line_count += 1
 
+bar_width = 0.25
 ya = []
 yb = []
+yc = []
 ya.append([y1[0],y2[0],y3[0],y4[0],y5[0]])
 yb.append([y1[1],y2[1],y3[1],y4[1],y5[1]])
+yc.append([y1[2],y2[2],y3[2],y4[2],y5[2]])
 
 yaerror = []
 yberror = []
+ycerror = []
 yaerror.append([y1error[0],y2error[0],y3error[0],y4error[0],y5error[0]])
 yberror.append([y1error[1],y2error[1],y3error[1],y4error[1],y5error[1]])
+ycerror.append([y1error[2],y2error[2],y3error[2],y4error[2],y5error[1]])
 
 x = ['M. Pressão','Oxímetro','M. Glicose','Termômetro','ECG']
 index = np.arange(len(x))
 
-plt.suptitle('Média de leituras entregues com sucesso em (%) \n usando os modos com e sem confirmação', fontsize=16)
+plt.title('Comparação da média de leituras entregues \n com sucesso em (%)', fontsize=12)
 
-plt.xticks( np.arange(5), (x) )
+plt.bar(index, ya[0],  bar_width, label='Com Confirmação', yerr=yaerror[0], capsize=4)
+plt.bar(index +  bar_width, yb[0],  bar_width, label='Sem Confirmação', yerr=yberror[0], capsize=4)
+plt.bar(index +  bar_width*2, yc[0],  bar_width, label='Com Retransmissão', yerr=ycerror[0], capsize=4)
 
-l1 = plt.errorbar(index, ya[0],  	yerr=yaerror[0], fmt='o--')
-l2 = plt.errorbar(index, yb[0], 	yerr=yberror[0], fmt='o--')
-# l3 = plt.errorbar(index, y3[0],		yerr=y3error[0], fmt='o--')
-# l4 = plt.errorbar(index, y4[0],		yerr=y4error[0], fmt='o--')
-# l5 = plt.errorbar(index, y5[0],		yerr=y5error[0], fmt='o--')
-plt.grid(alpha=0.9, linestyle=':')         
+plt.xticks(index + (bar_width), x)
+plt.grid(axis='y',alpha=0.9, linestyle=':')
+#plt.yaxis.grid(True)
 
-# Labels to use in the legend for each line
-line_labels = ['Com Confirmação', 'Sem Confirmação']
-
-# Create the legend
-plt.legend((l1, l2),     # The line objects
-           (line_labels),   # The labels for each line
-           loc='upper right',   # Position of legend
-           title='Modos de operação'  # Title for the legend
-           )
-
+plt.legend()
 plt.xlabel('')
-plt.ylabel('Pacotes')
+plt.ylabel('Pacotes',fontsize=12)
 plt.show()
 
 

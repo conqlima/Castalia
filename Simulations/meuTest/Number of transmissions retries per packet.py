@@ -65,14 +65,15 @@ with open('Number of transmissions retries per packet.csv') as csv_file:
 
 index = [1,2,3,4,5,6,7]
 
-plt.suptitle('Média de retransmissão de pacotes', fontsize=16)
+#plt.suptitle('Média de retransmissão de pacotes', fontsize=12)
+plt.title('Média de retransmissão de pacotes', fontsize=12)
 
-l1 = plt.errorbar(index, y1[0],  	yerr=y1error[0], fmt='o--')
-l2 = plt.errorbar(index, y2[0], 	yerr=y2error[0], fmt='o--')
-l3 = plt.errorbar(index, y3[0],		yerr=y3error[0], fmt='o--')
-l4 = plt.errorbar(index, y4[0],		yerr=y4error[0], fmt='o--')
-l5 = plt.errorbar(index, y5[0],		yerr=y5error[0], fmt='o--')
-plt.grid(alpha=0.9, linestyle=':')         
+l1 = plt.errorbar(index, y1[0],  	yerr=y1error[0], fmt='o--',capsize=4,markersize=4)
+l2 = plt.errorbar(index, y2[0], 	yerr=y2error[0], fmt='o--',capsize=4,markersize=4)
+l3 = plt.errorbar(index, y3[0],		yerr=y3error[0], fmt='o--',capsize=4,markersize=4)
+l4 = plt.errorbar(index, y4[0],		yerr=y4error[0], fmt='o--',capsize=4,markersize=4)
+l5 = plt.errorbar(index, y5[0],		yerr=y5error[0], fmt='o--',capsize=4,markersize=4)
+plt.grid(axis='y',alpha=0.9, linestyle=':')         
 
 # Labels to use in the legend for each line
 line_labels = ['200', '400', '600', '800', '1000']
@@ -84,8 +85,9 @@ plt.legend((l1, l2, l3, l4, l5),     # The line objects
            title='timeouts'  # Title for the legend
            )
 
-plt.xlabel('Retransmissões')
-plt.ylabel('pacotes')
+plt.xlabel('Retransmissões', fontsize=12)
+plt.ylabel('pacotes', fontsize=12)
+
 plt.show()
 
 

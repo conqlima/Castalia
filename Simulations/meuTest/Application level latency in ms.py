@@ -47,7 +47,7 @@ plt.tight_layout()
 plt.xlabel('milissegundos')
 plt.ylabel("quantidade de pacotes")
 plt.title('Latência da camada de aplicação em milissegundos')
-plt.grid(linestyle='dotted')
+plt.grid(axis='y',linestyle='dotted')
 plt.show()
 
 

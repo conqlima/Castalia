@@ -24,22 +24,21 @@
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-y = [8.45, 0.15, 1.24]
+bar_width = 0.25
+y = [8.45, 1.08, 1.24]
 yerror = [0.15, 0.02, 0.12146]
-x = ['Com confirmação', 'Sem confirmação', 'Com retransmissão']
+x = ['Com confirmação', 'Sem confirmação', 'Retransmissão']
 #organiza as label para serem plotadas no eixo x
 index = np.arange(len(x))
 
-plt.bar(index, y, yerr=yerror)
+plt.bar(index, y, yerr=yerror,capsize=4)
 plt.xticks(index, x)
 
 plt.ylabel('Associações')
 #plt.xlabel('Modos de operação')
-plt.title('Média de associações por modo de operação')
-plt.grid(linestyle='dotted')
-
+plt.title('Média de associações \n por modo de operação')
+plt.grid(axis='y',linestyle='dotted')
+#plt.xticks(rotation=45)
 plt.show()
 
 
