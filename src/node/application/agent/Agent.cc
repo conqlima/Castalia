@@ -25,8 +25,9 @@ void Agent::startup()
     maxNumOfRetransmition = par("maxNumOfRetransmition");
     confirmed_event = par("confirmed_event");
     packet_rate = par("packet_rate");
+    managerInitiated = par("managerInitiated");
     
-    //This will be always the hub
+    //Node 0 is always the next recipient
     recipientAddress = par("nextRecipient").stringValue();
     recipientId = atoi(recipientAddress.c_str());
     
@@ -50,7 +51,14 @@ void Agent::startup()
     //startup delay is not part of simulations
     maxSimTime = maxSimTime - startupDelay;
     //Calculate the total of events reports (measurements)
-    alarmt = (int) (maxSimTime*reading_rate);
+    if (managerInitiated){
+		//The manager initiate sending measurements
+		alarmt = 0;
+	}
+    else{
+		//Agent initiate the transmition of packets
+		alarmt = (int) (maxSimTime*reading_rate);
+	}
     //Calculate the time spacing between measurements
     data_spacing = reading_rate > 0 ? 1.0 / reading_rate : -1;//divide 1s para a taxa de pacotes para saber o espaçamento entre cada transmissão
 
@@ -324,13 +332,45 @@ void Agent::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                 {
                     trace() << "Packet of size 0";
                 }
-
+				
+				//Manager request measurement
+				if (managerInitiated)
+				{
+					if(communication_manager_initiated_mode_start(nodeNumber))
+					{
+						DataReqMode req_mode = communication_manager_initiated_mode();
+						if (req_mode & DATA_REQ_SUPP_MODE_SINGLE_RSP)
+							{
+								
+								managerInitiated = false;
+								dataSN++;
+								setTimer(SEND_PACKET, 0);
+								
+								
+								
+							}
+							else if (req_mode & DATA_REQ_SUPP_MODE_TIME_PERIOD)
+							{
+								//timeLimit = 1;
+							}
+							else if (req_mode & DATA_REQ_SUPP_MODE_TIME_NO_LIMIT)
+							{
+								//noTimeLimit = 1;
+							}
+					}
+					else
+					{
+						setTimer(SEND_PACKET, 0);
+						dataSN++;
+					}
+				}
                 //Checks if agent can send measurements
-                if (ctx->fsm->state == fsm_state_operating && alarmt > 0)
+                else if (ctx->fsm->state == fsm_state_operating && alarmt > 0)
                 {
                     agent_send_data(CONTEXT_ID);
                     dataSN++;
-
+					
+					//After an associantion, a packet is sent with no timeout
                     if (getNumberOfAssociationsTotal(nodeNumber) > isTheFirstAssociation)
                     {
                         //The first measurement send after a association
@@ -448,7 +488,11 @@ void Agent::timerFiredCallback(int index)
             {
                 st_msg[nodeNumber].tam_buff = 0;
                 st_msg[nodeNumber].buff_msgSed.clear();
-                if (ctx->fsm->state == fsm_state_operating && alarmt > 0)
+                if (managerInitiated)
+                {
+					//do something
+				}
+                else if (ctx->fsm->state == fsm_state_operating && alarmt > 0)
                 {
                     agent_send_data(CONTEXT_ID);
                     --alarmt;

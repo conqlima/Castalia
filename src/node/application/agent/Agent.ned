@@ -16,6 +16,7 @@ simple Agent like node.application.iApplication
 		double timeOutToRetransmitPacket = default(3);
 		int hubNode = default (0);		// explict the hub (sink node) node number
 		bool retransmissionPacket = default(false);
+		bool managerInitiated = default(false);
 		
 		//copied from ThroughputTest.ned
 		

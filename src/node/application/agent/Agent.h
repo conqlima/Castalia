@@ -2,6 +2,7 @@
 #define _AGENT_H_
 
 extern "C" {
+#include "communication/agent_ops.h"
 #include "communication/plugin/plugin.h"
 #include "communication/communication.h"
 #include "communication/context_manager.h"
@@ -64,6 +65,7 @@ private:
     int isTheFirstAssociation;
     bool confirmed_event;
     bool retransmissionPacket;
+    bool managerInitiated;
     unsigned int my_plugin_number;
     unsigned int opt;
     unsigned int nodeNumber;

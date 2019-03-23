@@ -21,7 +21,8 @@
  *
  */
 
-extern "C" {
+extern "C"
+{
 #include "ieee11073.h"
 #include "manager.h"
 #include <stdio.h>
@@ -42,9 +43,9 @@ ContextId m_CONTEXT_ID = {2, 0};
 /**
  *  Variable used by the stack
  */
-unsigned long long m_port = 0;//not used for Castalia
+unsigned long long m_port = 0; //not used for Castalia
 
-static std::map<long,int> first_association;
+static std::map<long, int> first_association;
 
 /**
  * Callback function that is called whenever a device
@@ -88,27 +89,27 @@ void new_data_received(Context *ctx, DataList *list)
     // manager_request_association_release(m_CONTEXT_ID);
 }
 
-//void new_data_received_test(Context *ctx, Request *r, DATA_apdu *response_apdu)
-//{
-//DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
-//char *data = json_encode_data_list(list);
+void new_data_received_test(Context *ctx, Request *r, DATA_apdu *response_apdu)
+{
+    DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
+    char *data = json_encode_data_list(list);
 
-////fprintf(stderr, "Medical Device Data Updated:\n");
-//DEBUG("Medical Device Data Updated:\n");
+    //fprintf(stderr, "Medical Device Data Updated:\n");
+    DEBUG("Medical Device Data Updated:\n");
 
-//if (data != NULL)
-//{
-////fprintf(stderr, "%s", data);
-//DEBUG("%s", data);
-////fprintf(stderr, "\n");
-//DEBUG("\n");
+    if (data != NULL)
+    {
+        //fprintf(stderr, "%s", data);
+        DEBUG("%s", data);
+        //fprintf(stderr, "\n");
+        DEBUG("\n");
 
-//fflush(stderr);
-//}
+        fflush(stderr);
+    }
 
-//data_list_del(list);
-//free(data);
-//}
+    data_list_del(list);
+    free(data);
+}
 
 /**
  * Callback function that is called whenever a new device
@@ -172,6 +173,8 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
     /*OK, attributes received, we do not need retrieve
     them anymore */
     first_association[ctx->id.plugin]++;
+    //service_init(ctx);
+    device_reqdata();
 }
 
 /**
@@ -185,11 +188,15 @@ void device_reqmdsattr()
     manager_request_get_all_mds_attributes(m_CONTEXT_ID, print_device_attributes);
 }
 
+/**
+ * Request agent data
+ *
+ */
 void device_reqdata()
 {
     //fprintf(stderr, "device_reqdata\n");
     DEBUG("device_reqdata\n");
-    //manager_request_measurement_data_transmission(m_CONTEXT_ID, new_data_received_test);
+    manager_request_measurement_data_transmission(m_CONTEXT_ID, new_data_received_test);
 }
 
 /**
@@ -224,5 +231,3 @@ void m_castalia_mode(unsigned int nodeId)
     //Clean every initialization
     first_association.clear();
 }
-
-
