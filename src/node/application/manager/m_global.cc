@@ -173,7 +173,8 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
     /*OK, attributes received, we do not need retrieve
     them anymore */
     first_association[ctx->id.plugin]++;
-    //service_init(ctx);
+
+    //Manager request measurements - Manager initiated mode
     device_reqdata();
 }
 
