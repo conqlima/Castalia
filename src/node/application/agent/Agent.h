@@ -15,6 +15,7 @@ extern "C" {
 #include "specializations/basic_ECG.h"
 #include "ieee11073.h"
 #include "agent.h"
+#include "manager.h"
 #include "util/log.h"
 }
 
@@ -51,6 +52,7 @@ private:
     double reading_rate;
     double maxSimTime;
     double timeOutToRetransmitPacket;
+    double managerInitiatedTime;
     float packet_spacing;
     float data_spacing;
     int dataSN;
@@ -71,6 +73,7 @@ private:
     unsigned int nodeNumber;
     string recipientAddress;
     string application_name;
+    string managerInitiatedMode;
     void* (*event_report_cb)();
     //MyPacket *pktGlobal;
 

@@ -26,6 +26,8 @@ void Agent::startup()
     confirmed_event = par("confirmed_event");
     packet_rate = par("packet_rate");
     managerInitiated = par("managerInitiated");
+    managerInitiatedMode = par("managerInitiateMode").stringValue();
+    managerInitiatedTime = par("managerInitiatedTime");
 
     //Node 0 is always the next recipient
     recipientAddress = par("nextRecipient").stringValue();
@@ -50,11 +52,27 @@ void Agent::startup()
 
     //startup delay is not part of simulations
     maxSimTime = maxSimTime - startupDelay;
-    //Calculate the total of events reports (measurements)
+    //The manager initiate sending measurements
     if (managerInitiated)
     {
-        //The manager initiate sending measurements
         alarmt = -1;
+
+        if(!strcmp(managerInitiatedMode.c_str(),"singleMode")){
+        //single mode choose
+        DataReqMode mode = DATA_REQ_START_STOP
+                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_SINGLE_RSP;
+        setDataReqMode(mode, nodeNumber);
+        }else if(!strcmp(managerInitiatedMode.c_str(),"timePeriodMode")){
+        //time period mode choose
+        DataReqMode mode = DATA_REQ_START_STOP
+                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_PERIOD;
+        setDataReqMode(mode, nodeNumber);
+        }else{
+        //no time period mode choose
+        DataReqMode mode = DATA_REQ_START_STOP
+                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
+        setDataReqMode(mode, nodeNumber);
+        }
     }
     else
     {
@@ -338,7 +356,9 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                 {
                     if (communication_manager_initiated_mode_start(nodeNumber))
                     {
-                        DataReqMode req_mode = communication_manager_initiated_mode();
+                        //DataReqMode req_mode = communication_manager_initiated_mode();
+                        DataReqMode req_mode = getDataReqMode(nodeNumber);
+
                         if (req_mode & DATA_REQ_SUPP_MODE_SINGLE_RSP)
                         {
                             managerInitiated = false;
@@ -348,7 +368,16 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                         }
                         else if (req_mode & DATA_REQ_SUPP_MODE_TIME_PERIOD)
                         {
-                            //timeLimit = 1;
+                            //alarmt = (int)(maxSimTime * reading_rate);
+                            managerInitiated = false;
+                            alarmt = (int)(managerInitiatedTime * reading_rate);
+                            dataSN++;
+                            agent_send_data(CONTEXT_ID);
+                            setTimer(SEND_PACKET, 0);
+                            --alarmt;
+                            //An association has been made, update isTheFirstAssociation
+                            isTheFirstAssociation = getNumberOfAssociationsTotal(nodeNumber);
+
                         }
                         else if (req_mode & DATA_REQ_SUPP_MODE_TIME_NO_LIMIT)
                         {
@@ -545,7 +574,7 @@ void Agent::timerFiredCallback(int index)
             RC--;
 
             if (retransmissionPacket)
-                setTimer(TO_ASSOC, timeOutToRetransmitPacket); //4
+                setTimer(TO_ASSOC, timeOutToRetransmitPacket);
             else
                 setTimer(TO_ASSOC, 10);
         }

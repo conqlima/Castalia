@@ -31,6 +31,7 @@ void Manager::startup()
         }
     }
 
+    //creates a m_com_plugin for each agent
     if (m_comm_plugin == NULL)
     {
         m_comm_plugin = new CommunicationPlugin[numNodes];

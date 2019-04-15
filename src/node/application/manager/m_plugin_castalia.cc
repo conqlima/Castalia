@@ -149,7 +149,7 @@ static int m_network_castalia_wait_for_data(Context *ctx)
  */
 static void m_message_type(intu8 * buffer, int size, Context* ctx)
 {
-    unsigned int nodeId = (ctx->id.plugin+1) / 2;
+    unsigned int nodeId = (ctx->id.plugin) / 2;
     intu8 * bufferTmp = (intu8 *) calloc(size, sizeof(intu8));
     intu8 * initial_address = bufferTmp;
     for (int i = 0; i < size; i++)

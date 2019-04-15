@@ -17,6 +17,8 @@ simple Agent like node.application.iApplication
 		int hubNode = default (0);		// explict the hub (sink node) node number
 		bool retransmissionPacket = default(false);
 		bool managerInitiated = default(false);
+		string managerInitiateMode @enum("singleMode", "timePeriodMode", "noTimePeriodMode") = default("singleMode");
+		double managerInitiatedTime = default(0);
 		
 		//copied from ThroughputTest.ned
 		

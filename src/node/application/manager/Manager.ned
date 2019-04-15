@@ -24,6 +24,8 @@ simple Manager like node.application.iApplication
 		int latencyHistogramBuckets = default (10);
 
 
+
+
 	gates: 
 	 	output toCommunicationModule;
 		output toSensorDeviceManager;
