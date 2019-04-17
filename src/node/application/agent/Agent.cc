@@ -350,15 +350,13 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                 {
                     trace() << "Packet of size 0";
                 }
-
+                
+                DataReqMode req_mode = getDataReqMode(nodeNumber);
                 //Manager request measurement
                 if (managerInitiated && ctx->fsm->state == fsm_state_operating)
                 {
-                    if (communication_manager_initiated_mode_start(nodeNumber))
+                    if (getIsTheStartMode(nodeNumber))
                     {
-                        //DataReqMode req_mode = communication_manager_initiated_mode();
-                        DataReqMode req_mode = getDataReqMode(nodeNumber);
-
                         if (req_mode & DATA_REQ_SUPP_MODE_SINGLE_RSP)
                         {
                             managerInitiated = false;
@@ -368,7 +366,6 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                         }
                         else if (req_mode & DATA_REQ_SUPP_MODE_TIME_PERIOD)
                         {
-                            //alarmt = (int)(maxSimTime * reading_rate);
                             managerInitiated = false;
                             alarmt = (int)(managerInitiatedTime * reading_rate);
                             dataSN++;
@@ -381,20 +378,34 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                         }
                         else if (req_mode & DATA_REQ_SUPP_MODE_TIME_NO_LIMIT)
                         {
-                            //noTimeLimit = 1;
+                            managerInitiated = false;
+                            alarmt = (int)(maxSimTime * reading_rate);
+                            dataSN++;
+                            agent_send_data(CONTEXT_ID);
+                            setTimer(SEND_PACKET, 0);
+                            --alarmt;
+                            //An association has been made, update isTheFirstAssociation
+                            isTheFirstAssociation = getNumberOfAssociationsTotal(nodeNumber);
                         }
                     }
                     else
                     {
-                        setTimer(SEND_PACKET, 0);
                         dataSN++;
+                        setTimer(SEND_PACKET, 0);                        
                     }
+                }
+                //stop sending measurements message received
+                else if (ctx->fsm->state == fsm_state_operating && !(req_mode >> 15))
+                {
+                    alarmt = 0;
+                    dataSN++;
+                    setTimer(SEND_PACKET, 0);
                 }
                 //Checks if agent can send measurements
                 else if (ctx->fsm->state == fsm_state_operating && alarmt > 0)
                 {
-                    agent_send_data(CONTEXT_ID);
                     dataSN++;
+                    agent_send_data(CONTEXT_ID);
 
                     //After an associantion, a packet is sent with no timeout
                     if (getNumberOfAssociationsTotal(nodeNumber) > isTheFirstAssociation)
@@ -514,9 +525,10 @@ void Agent::timerFiredCallback(int index)
             {
                 st_msg[nodeNumber].tam_buff = 0;
                 st_msg[nodeNumber].buff_msgSed.clear();
+                //Manager-initiated mode sends a stop message
                 if (managerInitiated)
                 {
-                    //do something
+                    //TO DO
                 }
                 else if (ctx->fsm->state == fsm_state_operating && alarmt > 0)
                 {

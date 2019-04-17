@@ -12,7 +12,11 @@ void Manager::startup()
     packet_rate = par("packet_rate");
     startupDelay = par("startupDelay");
     delayLimit = par("delayLimit");
+    managerInitiated = par("managerInitiated");
     totalPacketsReceived = 0;
+
+    if(managerInitiated)
+        setIsManagerInitiatedModeActive(true);
 
     //total number of nodes
     numNodes = getParentModule()->getParentModule()->par("numNodes");
@@ -323,7 +327,7 @@ void Manager::finishSpecific()
             bytesDelivered += appModule->getBytesReceived(self);
         }
         //the manger does not received measurement from himself
-        if (i != atoi(SELF_NETWORK_ADDRESS))
+        if (i != (unsigned int)atoi(SELF_NETWORK_ADDRESS))
         collectOutput("Measurement Packets Received", i, "", m_getMeasurementPacketsTotal(i));
     }
 

@@ -47,6 +47,16 @@ unsigned long long m_port = 0; //not used for Castalia
 
 static std::map<long, int> first_association;
 
+static bool isManagerInitiatedModeActive = false;
+
+void setIsManagerInitiatedModeActive(bool value){
+    isManagerInitiatedModeActive = value;
+}
+
+bool getIsManagerInitiatedModeActive(){
+    return isManagerInitiatedModeActive;
+}
+
 /**
  * Callback function that is called whenever a device
  * is unvailable.
@@ -87,11 +97,17 @@ void new_data_received(Context *ctx, DataList *list)
 
     // uncomment for manager-initiated disassociation testing
     // manager_request_association_release(m_CONTEXT_ID);
+    DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
+                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
+    setDataReqMode(mode, ctx->id.plugin/2);
+    device_reqdata(ctx);
+    //manager_request_association_release(ctx->id);
 }
 
-void new_data_received_test(Context *ctx, Request *r, DATA_apdu *response_apdu)
+void new_data_received_from_manager_initiated_mode(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-    DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
+    //DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
+    DataList *list = manager_get_mds_attributes(ctx->id);
     char *data = json_encode_data_list(list);
 
     //fprintf(stderr, "Medical Device Data Updated:\n");
@@ -139,7 +155,7 @@ void device_associated(Context *ctx, DataList *list)
      * association*/
     if (first_association[ctx->id.plugin] == 0)
     {
-        device_reqmdsattr();
+        device_reqmdsattr(ctx);
     }
 }
 
@@ -152,7 +168,8 @@ void device_associated(Context *ctx, DataList *list)
  */
 void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
-    DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
+    //DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
+    DataList *list = manager_get_mds_attributes(ctx->id);
     char *data = json_encode_data_list(list);
 
     //fprintf(stderr, "Print device attributes:\n");
@@ -175,29 +192,30 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
     first_association[ctx->id.plugin]++;
 
     //Manager request measurements - Manager initiated mode
-    device_reqdata();
+    if(getIsManagerInitiatedModeActive())
+        device_reqdata(ctx);
 }
 
 /**
  * Request all MDS attributes
  *
  */
-void device_reqmdsattr()
+void device_reqmdsattr(Context *ctx)
 {
     //fprintf(stderr, "device_reqmdsattr\n");
     DEBUG("device_reqmdsattr\n");
-    manager_request_get_all_mds_attributes(m_CONTEXT_ID, print_device_attributes);
+    manager_request_get_all_mds_attributes(ctx->id, print_device_attributes);
 }
 
 /**
  * Request agent data
  *
  */
-void device_reqdata()
+void device_reqdata(Context *ctx)
 {
     //fprintf(stderr, "device_reqdata\n");
     DEBUG("device_reqdata\n");
-    manager_request_measurement_data_transmission(m_CONTEXT_ID, new_data_received_test);
+    manager_request_measurement_data_transmission(ctx->id, new_data_received_from_manager_initiated_mode);
 }
 
 /**
@@ -226,8 +244,8 @@ void m_timer_reset_timeout(Context *ctx)
  */
 void m_castalia_mode(unsigned int nodeId)
 {
-    m_CONTEXT_ID.plugin = 2;
-    m_CONTEXT_ID.connid = m_port;
+    m_CONTEXT_ID.plugin = 2;//no effect in Castalia application
+    m_CONTEXT_ID.connid = m_port;//no effect in Castalia application
     m_plugin_network_castalia_manager_setup(&m_comm_plugin[nodeId], m_port);
     //Clean every initialization
     first_association.clear();

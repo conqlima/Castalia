@@ -7,6 +7,7 @@ simple Manager like node.application.iApplication
 		int priority = default(1); // mandatory parameter
 		int packetHeaderOverhead = default(16);	// in bytes
 		int constantDataPayload = default(16);	// in bytes
+		bool managerInitiated = default(false);
 		
 		//copied from ThroughputTest.ned
 		
