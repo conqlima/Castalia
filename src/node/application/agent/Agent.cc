@@ -53,6 +53,7 @@ void Agent::startup()
     //startup delay is not part of simulations
     maxSimTime = maxSimTime - startupDelay;
     //The manager initiate sending measurements
+    setIsTheStartMode(0, nodeNumber);
     if (managerInitiated)
     {
         alarmt = -1;
@@ -395,7 +396,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     }
                 }
                 //stop sending measurements message received
-                else if (ctx->fsm->state == fsm_state_operating && !(req_mode >> 15))
+                else if (ctx->fsm->state == fsm_state_operating && !(req_mode >> 15) && (getNumberOfAssociationsTotal(nodeNumber) == isTheFirstAssociation))
                 {
                     alarmt = 0;
                     dataSN++;
