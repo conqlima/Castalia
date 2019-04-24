@@ -53,7 +53,7 @@ void Agent::startup()
     //startup delay is not part of simulations
     maxSimTime = maxSimTime - startupDelay;
     //The manager initiate sending measurements
-    setIsTheStartMode(0, nodeNumber);
+    communication_agent_setIsTheStartMode(0, nodeNumber);
     if (managerInitiated)
     {
         alarmt = -1;
@@ -62,17 +62,17 @@ void Agent::startup()
         //single mode choose
         DataReqMode mode = DATA_REQ_START_STOP
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_SINGLE_RSP;
-        setDataReqMode(mode, nodeNumber);
+        manager_setDataReqMode(mode, nodeNumber);
         }else if(!strcmp(managerInitiatedMode.c_str(),"timePeriodMode")){
         //time period mode choose
         DataReqMode mode = DATA_REQ_START_STOP
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_PERIOD;
-        setDataReqMode(mode, nodeNumber);
+        manager_setDataReqMode(mode, nodeNumber);
         }else{
         //no time period mode choose
         DataReqMode mode = DATA_REQ_START_STOP
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
-        setDataReqMode(mode, nodeNumber);
+        manager_setDataReqMode(mode, nodeNumber);
         }
     }
     else
@@ -352,11 +352,11 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     trace() << "Packet of size 0";
                 }
                 
-                DataReqMode req_mode = getDataReqMode(nodeNumber);
+                DataReqMode req_mode = manager_getDataReqMode(nodeNumber);
                 //Manager request measurement
                 if (managerInitiated && ctx->fsm->state == fsm_state_operating)
                 {
-                    if (getIsTheStartMode(nodeNumber))
+                    if (communication_agent_getIsTheStartMode(nodeNumber))
                     {
                         if (req_mode & DATA_REQ_SUPP_MODE_SINGLE_RSP)
                         {

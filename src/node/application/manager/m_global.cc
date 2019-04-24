@@ -99,7 +99,7 @@ void new_data_received(Context *ctx, DataList *list)
     // manager_request_association_release(m_CONTEXT_ID);
     DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
-    setDataReqMode(mode, ctx->id.plugin/2);
+    manager_setDataReqMode(mode, ctx->id.plugin/2);
     device_reqdata(ctx);
     //manager_request_association_release(ctx->id);
 }
