@@ -238,9 +238,12 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
     //retransmit the last packet sent
     else if (sequenceNumber == last_packet[sourceId])
     {
-        my_plugin_number = sourceId*2;
-        m_CONTEXT_ID = {my_plugin_number, 0};
-        retransmitPacket(sourceId);
+        if (m_st_msg[sourceId].tam_buff > 0)
+        {
+            my_plugin_number = sourceId*2;
+            m_CONTEXT_ID = {my_plugin_number, 0};
+            retransmitPacket(sourceId);
+        }
     }
 }
 

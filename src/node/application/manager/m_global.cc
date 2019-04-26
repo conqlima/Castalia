@@ -91,15 +91,18 @@ void new_data_received(Context *ctx, DataList *list)
         //fprintf(stderr, "\n");
         DEBUG("\n");
 
-        fflush(stderr);
-        free(data);
     }
+
+    fflush(stderr);
+    free(data);
 
     // uncomment for manager-initiated disassociation testing
     // manager_request_association_release(m_CONTEXT_ID);
     DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
     manager_setDataReqMode(mode, ctx->id.plugin/2);
+    //cancel all the pending requests
+    service_init(ctx);
     device_reqdata(ctx);
     //manager_request_association_release(ctx->id);
 }
@@ -125,6 +128,11 @@ void new_data_received_from_manager_initiated_mode(Context *ctx, Request *r, DAT
 
     data_list_del(list);
     free(data);
+
+    // DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
+    //                        | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
+    // manager_setDataReqMode(mode, ctx->id.plugin/2);
+    // device_reqdata(ctx);
 }
 
 /**

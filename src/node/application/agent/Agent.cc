@@ -223,7 +223,6 @@ void Agent::startup()
 
     //Initialize the agent
     agent_init(CONTEXT_ID, plugins, specialization, event_report_cb, mds_data_cb);
-
     /**
      * Callbacks functions to notify the user when
      * the agents changes de finite states machine
@@ -420,11 +419,12 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
 
                     --alarmt;
                 }
-                else if (alarmt == 0)
+                else if (alarmt == 0 && ctx->fsm->state == fsm_state_operating)
                 {
                     agent_request_association_release(CONTEXT_ID);
                     --alarmt;
                     dataSN++;
+                    //if (st_msg[nodeNumber].tam_buff > 0)
                     setTimer(SEND_PACKET, 0);
                 }
                 else if (alarmt == -1)
@@ -434,7 +434,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                 }
                 else //associantion abort received in Agent initiated mode
                 {
-                    if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating) && alarmt > 0)
+                    if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating) && alarmt >= 0)
                     {
                         //Checks if there was a measurement to be sent
                         if (getTimer(SEND_PACKET) != 0)
