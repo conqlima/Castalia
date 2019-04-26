@@ -89,7 +89,8 @@ protected:
     void timerFiredCallback(int);
     void finishSpecific();
     MyPacket* createDataPacket(int seqNum);
-    void tryNewAssociation(void);
+    void tryNewAssociationForTimeout(void);
+    void tryNewAssociationForAbort(void);
     void retransmitPacket(void);
 
 public:
