@@ -189,11 +189,18 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                     //receive all the messages in received packet
                     while((communication_wait_for_data_input(m_ctx)) == NETWORK_ERROR_NONE)
                     {
+                        while(!m_st_msg[sourceId].msgType.empty())
+                            m_st_msg[sourceId].msgType.pop();
                         communication_read_input_stream(m_ctx->id);
                         trace() << "type: " << m_st_msg[sourceId].msgType.front();
                         m_st_msg[sourceId].msgType.pop();
-
                     }
+
+                    // if(!m_st_msg[sourceId].msgType.empty())
+                    // {
+                    //     trace() << "type: " << m_st_msg[sourceId].msgType.front();
+                    //     m_st_msg[sourceId].msgType.pop();
+                    // }
 					
 					//an error occurred, cancel timers for the current node
                     if(m_ctx->fsm->state == fsm_state_unassociated)
@@ -209,6 +216,11 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                     {
 
                         dataSN[sourceId]++;
+                        // while(!m_st_msg[sourceId].msgType.empty())
+                        // {
+                        //     trace() << "type: " << m_st_msg[sourceId].msgType.front();
+                        //     m_st_msg[sourceId].msgType.pop();
+                        // }
                         trace() << "Sending packet #" << dataSN[sourceId] << " to node " << sourceId;//sequence number
                         while(!m_st_msg[sourceId].msgType.empty())
                         {

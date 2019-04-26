@@ -58,25 +58,39 @@ void Agent::startup()
     {
         alarmt = -1;
 
-        if(!strcmp(managerInitiatedMode.c_str(),"singleMode")){
-        //single mode choose
-        DataReqMode mode = DATA_REQ_START_STOP
-                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_SINGLE_RSP;
-        manager_setDataReqMode(mode, nodeNumber);
-        }else if(!strcmp(managerInitiatedMode.c_str(),"timePeriodMode")){
-        //time period mode choose
-        DataReqMode mode = DATA_REQ_START_STOP
-                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_PERIOD;
-        manager_setDataReqMode(mode, nodeNumber);
-        }else{
-        //no time period mode choose
-        DataReqMode mode = DATA_REQ_START_STOP
-                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
-        manager_setDataReqMode(mode, nodeNumber);
+        if (!strcmp(managerInitiatedMode.c_str(), "singleMode"))
+        {
+            //single mode choose
+            DataReqMode mode = DATA_REQ_START_STOP | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_SINGLE_RSP;
+            manager_setDataReqMode(mode, nodeNumber);
+        }
+        else if (!strcmp(managerInitiatedMode.c_str(), "timePeriodMode"))
+        {
+            //time period mode choose
+            DataReqMode mode = DATA_REQ_START_STOP | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_PERIOD;
+            manager_setDataReqMode(mode, nodeNumber);
+        }
+        else if (!strcmp(managerInitiatedMode.c_str(), "noTimePeriodMode"))
+        {
+            //no time period mode choose
+            DataReqMode mode = DATA_REQ_START_STOP | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
+            manager_setDataReqMode(mode, nodeNumber);
+        }
+        else
+        {
+            throw cRuntimeError("Invalid managerInitiatedMode value: %s", managerInitiatedMode.c_str());
         }
     }
-    else
+    else//agent initiated mode
     {
+        //set the 16º bit
+        DataReqMode mode = DATA_REQ_START_STOP | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_SINGLE_RSP;
+        manager_setDataReqMode(mode, nodeNumber);
+
+        //retransmission mode use confirmed events
+        if(retransmissionPacket)
+            confirmed_event = true;
+
         //Agent initiate the transmition of packets
         alarmt = (int)(maxSimTime * reading_rate);
     }
@@ -350,7 +364,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                 {
                     trace() << "Packet of size 0";
                 }
-                
+
                 DataReqMode req_mode = manager_getDataReqMode(nodeNumber);
                 //Manager request measurement
                 if (managerInitiated && ctx->fsm->state == fsm_state_operating)
@@ -360,7 +374,8 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                         if (req_mode & DATA_REQ_SUPP_MODE_SINGLE_RSP)
                         {
                             managerInitiated = false;
-                            alarmt++;//increment in order to agent sends the associantion release in line 383
+                            data_spacing = 0; //data_spacing not allowed in this mode
+                            alarmt = 1; //just one measurement
                             dataSN++;
                             setTimer(SEND_PACKET, 0);
                         }
@@ -374,7 +389,6 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                             --alarmt;
                             //An association has been made, update isTheFirstAssociation
                             isTheFirstAssociation = getNumberOfAssociationsTotal(nodeNumber);
-
                         }
                         else if (req_mode & DATA_REQ_SUPP_MODE_TIME_NO_LIMIT)
                         {
@@ -391,7 +405,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     else
                     {
                         dataSN++;
-                        setTimer(SEND_PACKET, 0);                        
+                        setTimer(SEND_PACKET, 0);
                     }
                 }
                 //stop sending measurements message received
@@ -431,7 +445,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                 {
                     //abort message arrived in manager-initiated mode
                     //in association machine state
-                    if(ctx->fsm->state == fsm_state_associating)
+                    if (ctx->fsm->state == fsm_state_associating)
                         tryNewAssociationForAbort();
 
                     agent_disconnect(CONTEXT_ID);
@@ -520,6 +534,8 @@ void Agent::timerFiredCallback(int index)
                 //new measurement being transmited
                 collectHistogram("Number of transmissions' retries per packet", numOfRetransmissions);
                 numOfRetransmissions = 0;
+                //3 new associations can be made now
+                RC = RC_COUNT;
 
                 if (retransmissionPacket)
                     setTimer(TO_OPERA, timeOutToRetransmitPacket);
@@ -575,7 +591,8 @@ void Agent::timerFiredCallback(int index)
         {
             st_msg[nodeNumber].tam_buff = 0;
             st_msg[nodeNumber].buff_msgSed.clear();
-            trace() << "response not received for packet #" << dataSN << " in association mode aborting...";
+            //trace() << "response not received for packet #" << dataSN << " in association mode aborting...";
+            trace() << "3 consecutive associations failed. No longer associations will be made.";
             dataSN++;
             agent_request_association_abort(CONTEXT_ID);
             while (!st_msg[nodeNumber].msgType.empty())
@@ -740,14 +757,17 @@ void Agent::tryNewAssociationForTimeout(void)
 
     st_msg[nodeNumber].tam_buff = 0;
     st_msg[nodeNumber].buff_msgSed.clear();
+    while (!st_msg[nodeNumber].msgType.empty())
+        st_msg[nodeNumber].msgType.pop();
 
-    trace() << "response not received for packet #" << dataSN << " sending aborting message...";
+    trace() << "response not received for packet #" << dataSN << " sending abort message...";
     dataSN++;
     agent_request_association_abort(CONTEXT_ID);
+    //trace() << "type: " << st_msg[nodeNumber].msgType.front();
     while (!st_msg[nodeNumber].msgType.empty())
     {
         trace() << "type: " << st_msg[nodeNumber].msgType.front();
-        st_msg[nodeNumber].msgType.pop();
+       st_msg[nodeNumber].msgType.pop();
     }
     toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
     packetsSent[recipientId]++;
@@ -795,38 +815,39 @@ void Agent::tryNewAssociationForAbort(void)
     //packetsSent[recipientId]++;
 
     //if (alarmt > 0)
-   // {
-         //Checks if there was a measurement to be sent
-        if (getTimer(SEND_PACKET) != 0)
-            alarmt++;
+    // {
+    //Checks if there was a measurement to be sent
+    if (getTimer(SEND_PACKET) != 0)
+        alarmt++;
 
-        cancelTimer(SEND_PACKET);
-        cancelTimer(TO_ASSOC);
-        cancelTimer(TO_OPERA);
-        agent_request_association_abort(CONTEXT_ID);
-        st_msg[nodeNumber].tam_buff = 0;
-        st_msg[nodeNumber].buff_msgSed.clear();
-        st_msg[nodeNumber].msgType.pop();
-        
-        service_init(ctx);
-        trace() << "trying new association";
-        agent_associate(CONTEXT_ID);
-        dataSN++;
-        setTimer(SEND_PACKET, 0);
+    cancelTimer(SEND_PACKET);
+    cancelTimer(TO_ASSOC);
+    cancelTimer(TO_OPERA);
+    agent_request_association_abort(CONTEXT_ID);
 
+    st_msg[nodeNumber].tam_buff = 0;
+    st_msg[nodeNumber].buff_msgSed.clear();
+    while (!st_msg[nodeNumber].msgType.empty())
+       st_msg[nodeNumber].msgType.pop();
 
-        // cancelTimer(SEND_PACKET);
-        // cancelTimer(TO_ASSOC);
-        // cancelTimer(TO_OPERA);
+    service_init(ctx);
+    trace() << "trying new association";
+    agent_associate(CONTEXT_ID);
+    dataSN++;
+    setTimer(SEND_PACKET, 0);
 
-        // st_msg[nodeNumber].tam_buff = 0;
-        // st_msg[nodeNumber].buff_msgSed.clear();
+    // cancelTimer(SEND_PACKET);
+    // cancelTimer(TO_ASSOC);
+    // cancelTimer(TO_OPERA);
 
-        //dataSN++;
- 
-        //service_init(ctx);
-        //agent_associate(CONTEXT_ID);
-        //setTimer(SEND_PACKET, 0);
+    // st_msg[nodeNumber].tam_buff = 0;
+    // st_msg[nodeNumber].buff_msgSed.clear();
+
+    //dataSN++;
+
+    //service_init(ctx);
+    //agent_associate(CONTEXT_ID);
+    //setTimer(SEND_PACKET, 0);
     //}
 
     //reset the RC for the new association
@@ -834,7 +855,6 @@ void Agent::tryNewAssociationForAbort(void)
 
     context_unlock(ctx);
 }
-
 
 void Agent::retransmitPacket(void)
 {
