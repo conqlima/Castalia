@@ -2,7 +2,7 @@
 
 Define_Module(Manager);
 
-//extern variable declared in m_global.cc
+//extern variable declared in m_global.h
 m_Tmsg* m_st_msg = NULL;
 CommunicationPlugin* m_comm_plugin;
 int* m_SETTIMER = NULL;
@@ -13,13 +13,43 @@ void Manager::startup()
     startupDelay = par("startupDelay");
     delayLimit = par("delayLimit");
     managerInitiated = par("managerInitiated");
+    numberOfReceivedMeasurementsToSendStop = par("numberOfReceivedMeasurementsToSendStop");
     totalPacketsReceived = 0;
+    numNodes = getParentModule()->getParentModule()->par("numNodes");
+    
+    //if(managerInitiated)
+    //{
+        cTopology *topo;	// temp variable to access packets received by other nodes
+        topo = new cTopology("topo");
+        topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());//Extracts model topology by the fully qualified NED type name of the modules.
 
-    if(managerInitiated)
-        setIsManagerInitiatedModeActive(true);
+        for (unsigned int i = 1; i < numNodes; i++)
+        {
+            Agent *appModule = dynamic_cast<Agent*>
+                           (topo->getNode(i)->getModule()->getSubmodule("Application"));
+            if (appModule)
+            {
+                //access the agent managerInitiated parameter
+                if(appModule->par("managerInitiated"))
+                {
+                    setIsManagerInitiatedModeActive(true,i);
+                    if (!strcmp(appModule->par("managerInitiateMode").stringValue(), "noTimePeriodMode"))
+                    {                        
+                        setIsNumberOfReceivedMeasurementsToSendStop(true, i);
+                        setNumberOfReceivedMeasurementsToSendStop(numberOfReceivedMeasurementsToSendStop,i);
+                    }
+                }
+                else
+                {
+                    setIsManagerInitiatedModeActive(false,i);
+                }
+                
+            }
+        }
+    //}
 
     //total number of nodes
-    numNodes = getParentModule()->getParentModule()->par("numNodes");
+
 
     //creates a Tmsg struct for each node
     if (m_st_msg == NULL)
