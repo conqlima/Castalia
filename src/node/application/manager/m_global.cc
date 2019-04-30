@@ -100,12 +100,12 @@ void new_data_received(Context *ctx, DataList *list)
     // manager_request_association_release(m_CONTEXT_ID);
     
     //uncomment for manager-initiated stop message testing
-    // DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
-    //                        | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
-    // manager_setDataReqMode(mode, ctx->id.plugin/2);
-    // //cancel all the pending requests
-    // service_init(ctx);
-    // device_reqdata(ctx);
+    DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
+                           | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
+    manager_setDataReqMode(mode, ctx->id.plugin/2);
+    //cancel all the pending requests
+    service_init(ctx);
+    device_reqdata(ctx);
 }
 
 void new_data_received_from_manager_initiated_mode(Context *ctx, Request *r, DATA_apdu *response_apdu)

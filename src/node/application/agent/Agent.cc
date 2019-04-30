@@ -366,7 +366,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                 }
 
                 DataReqMode req_mode = manager_getDataReqMode(nodeNumber);
-                //Manager request measurement
+                //Manager-initiated mode:  Manager request measurement
                 if (managerInitiated && ctx->fsm->state == fsm_state_operating)
                 {
                     if (communication_agent_getIsTheStartMode(nodeNumber))
@@ -408,14 +408,14 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                         setTimer(SEND_PACKET, 0);
                     }
                 }
-                //stop sending measurements message received
+                //Manager-initiated mode: stop sending measurements message received
                 else if (ctx->fsm->state == fsm_state_operating && !(req_mode >> 15) && (getNumberOfAssociationsTotal(nodeNumber) == isTheFirstAssociation))
                 {
                     alarmt = 0;
                     dataSN++;
                     setTimer(SEND_PACKET, 0);
                 }
-                //Checks if agent can send measurements
+                //Manager-initiated and Agent-initiated mode: Checks if agent can send measurements
                 else if (ctx->fsm->state == fsm_state_operating && alarmt > 0)
                 {
                     dataSN++;
@@ -433,6 +433,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
 
                     --alarmt;
                 }
+                //Manager-initiated and Agent-initiated mode: request association release
                 else if (alarmt == 0 && ctx->fsm->state == fsm_state_operating)
                 {
                     agent_request_association_release(CONTEXT_ID);
@@ -441,6 +442,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     //if (st_msg[nodeNumber].tam_buff > 0)
                     setTimer(SEND_PACKET, 0);
                 }
+                //Manager-initiated and Agent-initiated mode: association disconnect
                 else if (alarmt == -1)
                 {
                     //abort message arrived in manager-initiated mode
@@ -451,6 +453,7 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     agent_disconnect(CONTEXT_ID);
                     --alarmt;
                 }
+                //Manager-initiated and Agent-initiated mode:
                 else //associantion abort received
                 {
                     if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating) && alarmt >= 0)
