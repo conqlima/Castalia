@@ -13,7 +13,7 @@ void Manager::startup()
     startupDelay = par("startupDelay");
     delayLimit = par("delayLimit");
     managerInitiated = par("managerInitiated");
-    numberOfReceivedMeasurementsToSendStop = par("numberOfReceivedMeasurementsToSendStop");
+    //numberOfReceivedMeasurementsToSendStop = par("numberOfReceivedMeasurementsToSendStop");
     totalPacketsReceived = 0;
     numNodes = getParentModule()->getParentModule()->par("numNodes");
     
@@ -36,7 +36,7 @@ void Manager::startup()
                     if (!strcmp(appModule->par("managerInitiateMode").stringValue(), "noTimePeriodMode"))
                     {                        
                         setIsNumberOfReceivedMeasurementsToSendStop(true, i);
-                        setNumberOfReceivedMeasurementsToSendStop(numberOfReceivedMeasurementsToSendStop,i);
+                        setNumberOfReceivedMeasurementsToSendStop(appModule->par("numberOfReceivedMeasurementsToSendStop"),i);
                     }
                 }
                 else
@@ -246,11 +246,6 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                     {
 
                         dataSN[sourceId]++;
-                        // while(!m_st_msg[sourceId].msgType.empty())
-                        // {
-                        //     trace() << "type: " << m_st_msg[sourceId].msgType.front();
-                        //     m_st_msg[sourceId].msgType.pop();
-                        // }
                         trace() << "Sending packet #" << dataSN[sourceId] << " to node " << sourceId;//sequence number
                         while(!m_st_msg[sourceId].msgType.empty())
                         {

@@ -52,7 +52,7 @@ static bool isNumberOfReceivedMeasurementsToSendStop[6] = {false};
 static double numberOfReceivedMeasurementsToSendStop[6] = {0};
 
 void setNumberOfReceivedMeasurementsToSendStop(double value, unsigned int nodeId){
-    isNumberOfReceivedMeasurementsToSendStop[nodeId] = value;
+    numberOfReceivedMeasurementsToSendStop[nodeId] = value;
 }
 
 void setIsNumberOfReceivedMeasurementsToSendStop(bool value, unsigned int nodeId){
@@ -118,7 +118,7 @@ void new_data_received(Context *ctx, DataList *list)
     if (getIsNumberOfReceivedMeasurementsToSendStop(nodeId))
     {
         numberOfReceivedMeasurementsToSendStop[nodeId]--;
-        if(numberOfReceivedMeasurementsToSendStop <= 0)
+        if(numberOfReceivedMeasurementsToSendStop[nodeId] <= 0)
         {
             DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
@@ -163,6 +163,8 @@ void new_data_received_from_manager_initiated_mode(Context *ctx, Request *r, DAT
  */
 void device_associated(Context *ctx, DataList *list)
 {
+    unsigned int nodeId = (ctx->id.plugin) / 2;
+
     //fprintf(stderr, " Medical Device System Associated:\n");
     DEBUG(" Medical Device System Associated:\n");
 
@@ -183,6 +185,11 @@ void device_associated(Context *ctx, DataList *list)
     if (first_association[ctx->id.plugin] == 0)
     {
         device_reqmdsattr(ctx);
+    }
+    //Manager request measurements - Manager initiated mode
+    if(getIsManagerInitiatedModeActive(nodeId))
+    { 
+        device_reqdata(ctx);
     }
 }
 
@@ -219,9 +226,9 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
     them anymore */
     first_association[ctx->id.plugin]++;
 
-    //Manager request measurements - Manager initiated mode
-    if(getIsManagerInitiatedModeActive(nodeId))
-        device_reqdata(ctx);
+    // //Manager request measurements - Manager initiated mode
+    // if(getIsManagerInitiatedModeActive(nodeId))
+    //     device_reqdata(ctx);
 }
 
 /**

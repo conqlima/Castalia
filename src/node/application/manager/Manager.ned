@@ -8,7 +8,6 @@ simple Manager like node.application.iApplication
 		int packetHeaderOverhead = default(16);	// in bytes
 		int constantDataPayload = default(16);	// in bytes
 		bool managerInitiated = default(false);
-		double numberOfReceivedMeasurementsToSendStop = default(0);
 		
 		//copied from ThroughputTest.ned
 		

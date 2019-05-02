@@ -25,7 +25,6 @@ private:
     double packet_rate;
     double startupDelay;
     double delayLimit;
-    double numberOfReceivedMeasurementsToSendStop;
     float packet_spacing;
     int recipientId;
     int totalPacketsReceived;
