@@ -57,6 +57,10 @@ void new_data_received_from_manager_initiated_mode(Context *ctx, Request *r, DAT
 void new_data_received(Context *ctx, DataList *list);
 void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu);
 void m_castalia_mode(unsigned int my_plugin_number);
-void setIsManagerInitiatedModeActive(bool value);
-bool getIsManagerInitiatedModeActive();
+void setIsManagerInitiatedModeActive(bool value, unsigned int nodeId);
+bool getIsManagerInitiatedModeActive(unsigned int nodeId);
+void setIsNumberOfReceivedMeasurementsToSendStop(bool value, unsigned int nodeId);
+bool getIsNumberOfReceivedMeasurementsToSendStop(unsigned int nodeId);
+void setNumberOfReceivedMeasurementsToSendStop(double value, unsigned int nodeId);
+
 #endif

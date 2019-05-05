@@ -19,6 +19,7 @@ simple Agent like node.application.iApplication
 		bool managerInitiated = default(false);
 		string managerInitiateMode @enum("singleMode", "timePeriodMode", "noTimePeriodMode") = default("singleMode");
 		double managerInitiatedTime = default(0);
+		double numberOfReceivedMeasurementsToSendStop = default(0);
 		
 		//copied from ThroughputTest.ned
 		

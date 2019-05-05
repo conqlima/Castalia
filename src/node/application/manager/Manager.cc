@@ -2,7 +2,7 @@
 
 Define_Module(Manager);
 
-//extern variable declared in m_global.cc
+//extern variable declared in m_global.h
 m_Tmsg* m_st_msg = NULL;
 CommunicationPlugin* m_comm_plugin;
 int* m_SETTIMER = NULL;
@@ -12,14 +12,46 @@ void Manager::startup()
     packet_rate = par("packet_rate");
     startupDelay = par("startupDelay");
     delayLimit = par("delayLimit");
-    managerInitiated = par("managerInitiated");
+    //managerInitiated = par("managerInitiated");
+    //numberOfReceivedMeasurementsToSendStop = par("numberOfReceivedMeasurementsToSendStop");
     totalPacketsReceived = 0;
-
-    if(managerInitiated)
-        setIsManagerInitiatedModeActive(true);
-
-    //total number of nodes
     numNodes = getParentModule()->getParentModule()->par("numNodes");
+    //fprintf(stderr,"\n entrei init \n");
+    for (unsigned int i = 1; i < numNodes; i++)
+    {
+        setIsManagerInitiatedModeActive(false, i);
+        setIsNumberOfReceivedMeasurementsToSendStop(false, i);
+        setNumberOfReceivedMeasurementsToSendStop(0, i);
+    }
+
+        cTopology *topo;	// temp variable to access packets received by other nodes
+        topo = new cTopology("topo");
+        topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());//Extracts model topology by the fully qualified NED type name of the modules.
+
+        // cModule *targetModule = getParentModule()->getSubmodule("foo");
+        // Foo * = check_and_cast<Foo *>(targetModule);
+
+        for (unsigned int i = 1; i < numNodes; i++)
+        {
+             Agent *appModule = check_and_cast<Agent*>
+                            (topo->getNode(i)->getModule()->getSubmodule("Application"));
+            if (appModule)
+            {
+                //access the agent managerInitiated parameter
+                if(appModule->par("managerInitiated"))
+                {
+                    setIsManagerInitiatedModeActive(true,i);
+                    string managerInitiatedMode = appModule->par("managerInitiateMode").stringValue();
+                    if (!(strcmp(managerInitiatedMode.c_str(),"noTimePeriodMode")))
+                    {                        
+                        setIsNumberOfReceivedMeasurementsToSendStop(true, i);
+                        double temp = appModule->par("numberOfReceivedMeasurementsToSendStop");
+                        setNumberOfReceivedMeasurementsToSendStop(temp,i);
+                    }
+                }                
+            }
+        }
+        delete(topo);
 
     //creates a Tmsg struct for each node
     if (m_st_msg == NULL)
@@ -110,6 +142,7 @@ void Manager::startup()
 void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                                const char *source, double rssi, double lqi)
 {
+    //fprintf(stderr,"\nchegou\n");
     /**
      * Converte the packet from ApplicationPacket
      * to MyPacket.
@@ -127,13 +160,19 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
      * */
     recipientAddress = source;
     recipientId = sourceId;
+    //fprintf(stderr,"\naiaiaiaia\n");
     if (sequenceNumber != last_packet[sourceId])
     {
+        //fprintf(stderr,"\nagora vai\n");
         //Checks if there is a activated timeout for some agent
         Context *ctx;
+        
         my_plugin_number = sourceId*2;
+        //fprintf(stderr,"\nachei\n");
         m_CONTEXT_ID = {my_plugin_number, 0};
+        
         ctx = context_get_and_lock(m_CONTEXT_ID);
+        
         fsm_states c = ctx->fsm->state;
         switch(c)
         {
@@ -151,6 +190,8 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
         context_unlock(ctx);
 
         last_packet[sourceId] = sequenceNumber;
+
+        //fprintf(stderr,"\naiaiaiaia\n");
 
         //clear the Tmsg struct to receive a new packet
         m_st_msg[sourceId].tam_buff = 0;
@@ -170,6 +211,7 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
         {
             if (delayLimit == 0 || (simTime() - rcvPacket->getCreationTime()) <= delayLimit)
             {
+              
                 trace() << "Received packet #" << sequenceNumber << " from node " << source;
                 collectOutput("Packets received per node", sourceId);//Adds one to the value of output name with index "sourceId".
                 packetsReceived[sourceId]++;
@@ -216,11 +258,6 @@ void Manager::fromNetworkLayer(ApplicationPacket * rcvPacketa,
                     {
 
                         dataSN[sourceId]++;
-                        // while(!m_st_msg[sourceId].msgType.empty())
-                        // {
-                        //     trace() << "type: " << m_st_msg[sourceId].msgType.front();
-                        //     m_st_msg[sourceId].msgType.pop();
-                        // }
                         trace() << "Sending packet #" << dataSN[sourceId] << " to node " << sourceId;//sequence number
                         while(!m_st_msg[sourceId].msgType.empty())
                         {

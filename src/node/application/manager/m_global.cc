@@ -36,25 +36,39 @@ extern "C"
 #include "MyPacket_m.h"
 
 /**
- * Initial value for plugin id
+ * (External var) Initial value for plugin id
  */
 ContextId m_CONTEXT_ID = {2, 0};
 
 /**
- *  Variable used by the stack
+ *  (External var) Variable used by the stack
  */
 unsigned long long m_port = 0; //not used for Castalia
 
 static std::map<long, int> first_association;
 
-static bool isManagerInitiatedModeActive = false;
+static bool isManagerInitiatedModeActive[6] = {false};
+static bool isNumberOfReceivedMeasurementsToSendStop[6] = {false};
+static double numberOfReceivedMeasurementsToSendStop[6] = {0};
 
-void setIsManagerInitiatedModeActive(bool value){
-    isManagerInitiatedModeActive = value;
+void setNumberOfReceivedMeasurementsToSendStop(double value, unsigned int nodeId){
+    numberOfReceivedMeasurementsToSendStop[nodeId] = value;
 }
 
-bool getIsManagerInitiatedModeActive(){
-    return isManagerInitiatedModeActive;
+void setIsNumberOfReceivedMeasurementsToSendStop(bool value, unsigned int nodeId){
+    isNumberOfReceivedMeasurementsToSendStop[nodeId] = value;
+}
+
+bool getIsNumberOfReceivedMeasurementsToSendStop(unsigned int nodeId){
+    return isNumberOfReceivedMeasurementsToSendStop[nodeId];
+}
+
+void setIsManagerInitiatedModeActive(bool value, unsigned int nodeId){
+    isManagerInitiatedModeActive[nodeId] = value;
+}
+
+bool getIsManagerInitiatedModeActive(unsigned int nodeId){
+    return isManagerInitiatedModeActive[nodeId];
 }
 
 /**
@@ -79,6 +93,7 @@ void m_device_unavailable(Context *ctx)
  */
 void new_data_received(Context *ctx, DataList *list)
 {
+    unsigned int nodeId = (ctx->id.plugin) / 2;
     //fprintf(stderr, "Medical Device Data Updated:\n");
     DEBUG("Medical Device Data Updated:\n");
 
@@ -100,12 +115,20 @@ void new_data_received(Context *ctx, DataList *list)
     // manager_request_association_release(m_CONTEXT_ID);
     
     //uncomment for manager-initiated stop message testing
-    DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
+    if (getIsNumberOfReceivedMeasurementsToSendStop(nodeId))
+    {
+        numberOfReceivedMeasurementsToSendStop[nodeId] = numberOfReceivedMeasurementsToSendStop[nodeId] -1;
+        if(numberOfReceivedMeasurementsToSendStop[nodeId] <= 0.0)
+        {
+            DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;
-    manager_setDataReqMode(mode, ctx->id.plugin/2);
-    //cancel all the pending requests
-    service_init(ctx);
-    device_reqdata(ctx);
+            manager_setDataReqMode(mode, nodeId);
+            //cancel all the pending requests
+            service_init(ctx);
+            device_reqdata(ctx);
+        }
+    }
+
 }
 
 void new_data_received_from_manager_initiated_mode(Context *ctx, Request *r, DATA_apdu *response_apdu)
@@ -140,6 +163,8 @@ void new_data_received_from_manager_initiated_mode(Context *ctx, Request *r, DAT
  */
 void device_associated(Context *ctx, DataList *list)
 {
+    unsigned int nodeId = (ctx->id.plugin) / 2;
+
     //fprintf(stderr, " Medical Device System Associated:\n");
     DEBUG(" Medical Device System Associated:\n");
 
@@ -161,6 +186,11 @@ void device_associated(Context *ctx, DataList *list)
     {
         device_reqmdsattr(ctx);
     }
+    //Manager request measurements - Manager initiated mode
+    if(getIsManagerInitiatedModeActive(nodeId))
+    { 
+        device_reqdata(ctx);
+    }
 }
 
 /**
@@ -172,6 +202,7 @@ void device_associated(Context *ctx, DataList *list)
  */
 void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
 {
+    unsigned int nodeId = (ctx->id.plugin) / 2;
     //DataList *list = manager_get_mds_attributes(m_CONTEXT_ID);
     DataList *list = manager_get_mds_attributes(ctx->id);
     char *data = json_encode_data_list(list);
@@ -195,9 +226,9 @@ void print_device_attributes(Context *ctx, Request *r, DATA_apdu *response_apdu)
     them anymore */
     first_association[ctx->id.plugin]++;
 
-    //Manager request measurements - Manager initiated mode
-    if(getIsManagerInitiatedModeActive())
-        device_reqdata(ctx);
+    // //Manager request measurements - Manager initiated mode
+    // if(getIsManagerInitiatedModeActive(nodeId))
+    //     device_reqdata(ctx);
 }
 
 /**

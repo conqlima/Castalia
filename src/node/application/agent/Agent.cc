@@ -445,13 +445,17 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                 //Manager-initiated and Agent-initiated mode: association disconnect
                 else if (alarmt == -1)
                 {
-                    //abort message arrived in manager-initiated mode
-                    //in association machine state
-                    if (ctx->fsm->state == fsm_state_associating)
+                    //abort message arrived in manager-initiated mode when no
+                    //measurements has been sent
+                    if (ctx->fsm->state == fsm_state_associating || managerInitiated)
+                    { 
                         tryNewAssociationForAbort();
-
-                    agent_disconnect(CONTEXT_ID);
-                    --alarmt;
+                    }
+                    else
+                    {
+                        agent_disconnect(CONTEXT_ID);
+                        --alarmt;
+                    }
                 }
                 //Manager-initiated and Agent-initiated mode:
                 else //associantion abort received
@@ -459,21 +463,6 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     if ((ctx->fsm->state == fsm_state_unassociated || ctx->fsm->state == fsm_state_associating) && alarmt >= 0)
                     {
                         tryNewAssociationForAbort();
-                        //Checks if there was a measurement to be sent
-                        // if (getTimer(SEND_PACKET) != 0)
-                        //     alarmt++;
-
-                        // cancelTimer(SEND_PACKET);
-                        // cancelTimer(TO_ASSOC);
-                        // cancelTimer(TO_OPERA);
-                        // agent_request_association_abort(CONTEXT_ID);
-                        // st_msg[nodeNumber].tam_buff = 0;
-                        // st_msg[nodeNumber].buff_msgSed.clear();
-                        // st_msg[nodeNumber].msgType.pop();
-                        // dataSN++;
-                        // service_init(ctx);
-                        // agent_associate(CONTEXT_ID);
-                        // setTimer(SEND_PACKET, 0);
                     }
                 }
 
@@ -522,10 +511,12 @@ void Agent::timerFiredCallback(int index)
         {
             if (RC)
             {
-                if (retransmissionPacket)
+                if (retransmissionPacket){
                     setTimer(TO_ASSOC, timeOutToRetransmitPacket); //4
-                else
+                }else{
+                    //fprintf(stderr,"\naquiiii\n");
                     setTimer(TO_ASSOC, 10);
+                }
             }
             break;
         }
