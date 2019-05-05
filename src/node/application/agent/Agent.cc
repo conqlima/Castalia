@@ -512,7 +512,7 @@ void Agent::timerFiredCallback(int index)
             if (RC)
             {
                 if (retransmissionPacket){
-                    setTimer(TO_ASSOC, timeOutToRetransmitPacket); //4
+                    setTimer(TO_ASSOC, 10); //4
                 }else{
                     //fprintf(stderr,"\naquiiii\n");
                     setTimer(TO_ASSOC, 10);
@@ -597,6 +597,11 @@ void Agent::timerFiredCallback(int index)
             toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
             packetsSent[recipientId]++;
             //RC = RC_COUNT;
+            cancelTimer(SEND_PACKET);
+            cancelTimer(TO_ASSOC);
+            cancelTimer(TO_OPERA);
+            agent_disconnect(CONTEXT_ID);
+            agent_finalize(CONTEXT_ID);
         }
         else //Resend the packet (max of 3 times)
         {
@@ -604,7 +609,7 @@ void Agent::timerFiredCallback(int index)
             RC--;
 
             if (retransmissionPacket)
-                setTimer(TO_ASSOC, timeOutToRetransmitPacket);
+                setTimer(TO_ASSOC, 10);
             else
                 setTimer(TO_ASSOC, 10);
         }
@@ -757,11 +762,12 @@ void Agent::tryNewAssociationForTimeout(void)
     trace() << "response not received for packet #" << dataSN << " sending abort message...";
     dataSN++;
     agent_request_association_abort(CONTEXT_ID);
+    trace() << "Sending packet #" << dataSN << " to node " << recipientAddress.c_str(); //sequence number
     //trace() << "type: " << st_msg[nodeNumber].msgType.front();
     while (!st_msg[nodeNumber].msgType.empty())
     {
         trace() << "type: " << st_msg[nodeNumber].msgType.front();
-       st_msg[nodeNumber].msgType.pop();
+        st_msg[nodeNumber].msgType.pop();
     }
     toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
     packetsSent[recipientId]++;
