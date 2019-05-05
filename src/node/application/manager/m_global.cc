@@ -117,8 +117,8 @@ void new_data_received(Context *ctx, DataList *list)
     //uncomment for manager-initiated stop message testing
     if (getIsNumberOfReceivedMeasurementsToSendStop(nodeId))
     {
-        numberOfReceivedMeasurementsToSendStop[nodeId]--;
-        if(numberOfReceivedMeasurementsToSendStop[nodeId] <= 0)
+        numberOfReceivedMeasurementsToSendStop[nodeId] = numberOfReceivedMeasurementsToSendStop[nodeId] -1;
+        if(numberOfReceivedMeasurementsToSendStop[nodeId] <= 0.0)
         {
             DataReqMode mode = (DATA_REQ_START_STOP & 0x0000)
                            | DATA_REQ_SUPP_SCOPE_CLASS | DATA_REQ_SUPP_MODE_TIME_NO_LIMIT;

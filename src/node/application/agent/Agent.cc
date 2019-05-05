@@ -511,10 +511,12 @@ void Agent::timerFiredCallback(int index)
         {
             if (RC)
             {
-                if (retransmissionPacket)
+                if (retransmissionPacket){
                     setTimer(TO_ASSOC, timeOutToRetransmitPacket); //4
-                else
+                }else{
+                    //fprintf(stderr,"\naquiiii\n");
                     setTimer(TO_ASSOC, 10);
+                }
             }
             break;
         }
