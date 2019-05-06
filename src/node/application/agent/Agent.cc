@@ -512,7 +512,7 @@ void Agent::timerFiredCallback(int index)
             if (RC)
             {
                 if (retransmissionPacket){
-                    setTimer(TO_ASSOC, 10); //4
+                    setTimer(TO_ASSOC, 3); //4
                 }else{
                     //fprintf(stderr,"\naquiiii\n");
                     setTimer(TO_ASSOC, 10);
@@ -609,7 +609,7 @@ void Agent::timerFiredCallback(int index)
             RC--;
 
             if (retransmissionPacket)
-                setTimer(TO_ASSOC, 10);
+                setTimer(TO_ASSOC, 3);
             else
                 setTimer(TO_ASSOC, 10);
         }
