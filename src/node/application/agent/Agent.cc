@@ -601,7 +601,7 @@ void Agent::timerFiredCallback(int index)
             cancelTimer(TO_ASSOC);
             cancelTimer(TO_OPERA);
             agent_disconnect(CONTEXT_ID);
-            agent_finalize(CONTEXT_ID);
+            //agent_finalize(CONTEXT_ID);
         }
         else //Resend the packet (max of 3 times)
         {
