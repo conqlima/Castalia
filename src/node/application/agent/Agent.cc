@@ -663,36 +663,36 @@ void Agent::handleRadioControlMessage(RadioControlMessage *radioMsg)
 
 void Agent::finishSpecific()
 {
-    declareOutput("Packets reception rate");
-    declareOutput("Packets loss rate");
+    //declareOutput("Packets reception rate");
+    //declareOutput("Packets loss rate");
     declareOutput("Control Packets");
     declareOutput("Measurement Packets Sent");
     declareOutput("Total of associations made");
 
     // temp variable to access packets received by other nodes
-    cTopology *topo;
-    topo = new cTopology("topo");
-    //Extract the module of node to work with.
-    //Extracts model topology by the fully qualified NED type name of the modules.
-    topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());
+    // cTopology *topo;
+    // topo = new cTopology("topo");
+    // //Extract the module of node to work with.
+    // //Extracts model topology by the fully qualified NED type name of the modules.
+    // topo->extractByNedTypeName(cStringTokenizer("node.Node").asVector());
 
-    long bytesDelivered = 0;
-    for (int i = 0; i < numNodes; i++)
-    {
-        Manager *appModule = dynamic_cast<Manager *>(topo->getNode(i)->getModule()->getSubmodule("Application"));
-        if (appModule)
-        {
-            int packetsSent = appModule->getPacketsSent(self);
-            if (packetsSent > 0) // this node sent us some packets
-            {
-                float rate = (float)packetsReceived[i] / packetsSent;
-                collectOutput("Packets reception rate", i, "total", rate);
-                collectOutput("Packets loss rate", i, "total", 1 - rate);
-            }
+    // long bytesDelivered = 0;
+    // for (int i = 0; i < numNodes; i++)
+    // {
+    //     Agent *appModule = dynamic_cast<Agent *>(topo->getNode(i)->getModule()->getSubmodule("Application"));
+    //     if (appModule)
+    //     {
+    //         int packetsSent = appModule->getPacketsSent(self);
+    //         if (packetsSent > 0) // this node sent us some packets
+    //         {
+    //             float rate = (float)packetsReceived[i] / packetsSent;
+    //             collectOutput("Packets reception rate", i, "total", rate);
+    //             collectOutput("Packets loss rate", i, "total", 1 - rate);
+    //         }
 
-            bytesDelivered += appModule->getBytesReceived(self);
-        }
-    }
+    //         bytesDelivered += appModule->getBytesReceived(self);
+    //     }
+    // }
     collectOutput("Control Packets", HUBNODE, "received", getControlPacketsReceived(nodeNumber));
     collectOutput("Control Packets", HUBNODE, "sent", getControlPacketsSent(nodeNumber));
     collectOutput("Control Packets", HUBNODE, "total", getControlPacketsReceived(nodeNumber) + getControlPacketsSent(nodeNumber));
@@ -700,9 +700,9 @@ void Agent::finishSpecific()
     collectOutput("Measurement Packets Sent", HUBNODE, "", getMeasurementPacketsTotal(nodeNumber));
     collectOutput("Total of associations made", HUBNODE, "", getNumberOfAssociationsTotal(nodeNumber));
 
-    delete (topo);
-
-    if (packet_rate > 0 && bytesDelivered > 0)
+    //delete (topo);
+    long bytesDelivered = getBytesReceived(nodeNumber); 
+    if (bytesDelivered > 0)
     {
         double energy = (resMgrModule->getSpentEnergy() * 1000000000) / (bytesDelivered * 8); //in nanojoules/bit
         declareOutput("Energy nJ/bit");

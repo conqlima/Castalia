@@ -171,11 +171,12 @@ static void message_type(intu8 * buffer, int size, Context* ctx)
     case AARQ_CHOSEN:
         st_msg[nodeId].msgType.push("Association Request");
         controlPackets[nodeId]++;
-        numberOfAssociations[nodeId]++;
+        //numberOfAssociations[nodeId]++;
         break;
     case AARE_CHOSEN:
         st_msg[nodeId].msgType.push("Association Response");
         controlPackets[nodeId]++;
+        numberOfAssociations[nodeId]++; //associations are complete when a response is received
         break;
     case RLRQ_CHOSEN:
         st_msg[nodeId].msgType.push("Association Release Request");
@@ -206,7 +207,7 @@ static void message_type(intu8 * buffer, int size, Context* ctx)
                 /*case for others actions type TO DO*/
                 default:{
                     st_msg[nodeId].msgType.push("unknown event type");
-                    measurementPackets[nodeId]++;
+                    //measurementPackets[nodeId]++;
                     break;
                 }
             }
@@ -224,7 +225,7 @@ static void message_type(intu8 * buffer, int size, Context* ctx)
                 /*case for others actions type TO DO*/
                 default:{
                     st_msg[nodeId].msgType.push("unknown event type");
-                    measurementPackets[nodeId]++;
+                    //measurementPackets[nodeId]++;
                     break;
                 }
             }
@@ -263,7 +264,7 @@ static void message_type(intu8 * buffer, int size, Context* ctx)
                 /*case for others actions type TO DO*/
                 default:
                     st_msg[nodeId].msgType.push("unknown action type");
-                    controlPackets[nodeId]++;
+                    //controlPackets[nodeId]++;
                 break;
             }
             break;
@@ -288,7 +289,7 @@ static void message_type(intu8 * buffer, int size, Context* ctx)
                 /*case for others actions type TO DO*/
                 default:
                     st_msg[nodeId].msgType.push("unknown action type");
-                    controlPackets[nodeId]++;
+                    //controlPackets[nodeId]++;
                 break;
             }
             break;
@@ -304,7 +305,7 @@ static void message_type(intu8 * buffer, int size, Context* ctx)
                 /*case for others actions type TO DO*/
                 default:{
                     st_msg[nodeId].msgType.push("unknown event type");
-                    controlPackets[nodeId]++;
+                    //controlPackets[nodeId]++;
                     break;
                 }
             }

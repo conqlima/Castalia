@@ -75,10 +75,10 @@ def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_labe
     ax.set_xlabel(x_label)
     ax.set_title(title)
     ax.grid(axis='y',alpha=0.9, linestyle=':')
-    ax.legend(loc = 'lower right')
+    ax.legend(loc = 'lower left')
 
 def readfile(y_data, y_error):
-	with open('MeasurementsReceivedinManagerManagerInitiated.csv') as csv_file:
+	with open('MeasurementsReceivedinManagerAgentInitiated.csv') as csv_file:
 		csv_reader = csv.reader(csv_file, delimiter=',')
 		line_count = 0
 		next(csv_reader)
@@ -99,14 +99,14 @@ def readfile(y_data, y_error):
 			line_count += 1
 
 def main(args):
-	x_data = ['Blood plessure\nMonitor','Oximeter','Glucose\nmeter','Thermometer','ECG']
+	x_data = ['Blood Plessure\nMonitor','Oximeter','Glucose\nmeter','Thermometer','ECG']
 	x_arrange = np.arange(len(x_data))
-	y_data_names = ['noTimeMode','singleMode','timePeriodMode']
+	y_data_names = ['confirmedMode','noConfirmedMode','retransmissionMode']
 	y_data = []
 	y_error = []
 	readfile(y_data, y_error)
 	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered measurements (%)', '')
-	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered packets (%)', 'Measurements received by manager')
+	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered measurements (%)', '')
 	plt.show()
 	return 0
 
