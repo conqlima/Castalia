@@ -20,7 +20,7 @@ int HUBNODE;
 void Agent::startup()
 {
     HUBNODE = par("hubNode");
-    retransmissionPacket = par("retransmissionPacket");
+    retransmissionPacket = par("retransmitPacket");
     timeOutToRetransmitPacket = par("timeOutToRetransmitPacket");
     maxNumOfRetransmition = par("maxNumOfRetransmition");
     confirmed_event = par("confirmed_event");
@@ -38,7 +38,7 @@ void Agent::startup()
     application_name = par("application_type").stringValue();
     packet_spacing = packet_rate > 0 ? 1 / float(packet_rate) : -1;
     dataSN = 0;
-    reading_rate = par("reading_rate");
+    reading_rate = par("measurements_per_second");
     RC = RC_COUNT;
     last_packet = -1;
     numOfRetransmissions = 0;
