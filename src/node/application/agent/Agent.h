@@ -93,6 +93,7 @@ protected:
     void tryNewAssociationForTimeout(void);
     void tryNewAssociationForAbort(void);
     void retransmitPacket(void);
+    void updateTimeOutToRetransmitPacket(double);
 
 public:
     int getPacketsSent(int addr)

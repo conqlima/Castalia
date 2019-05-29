@@ -421,6 +421,8 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     dataSN++;
                     agent_send_data(CONTEXT_ID);
 
+                    updateTimeOutToRetransmitPacket(SIMTIME_DBL(simTime() - rcvPacket->getCreationTime()));
+
                     //After an associantion, a packet is sent with no timeout
                     if (getNumberOfAssociationsTotal(nodeNumber) > isTheFirstAssociation)
                     {
@@ -863,4 +865,8 @@ void Agent::retransmitPacket(void)
     toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
     packetsSent[recipientId]++;
     //collectOutput("Number of transmissions retries per packet", dataSN);
+}
+
+void Agent::updateTimeOutToRetransmitPacket(double t){
+    timeOutToRetransmitPacket = t * 1000;
 }
