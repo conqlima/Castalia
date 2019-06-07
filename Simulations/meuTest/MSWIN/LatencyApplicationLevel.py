@@ -76,7 +76,7 @@ def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_labe
     ax.set_xlabel(x_label)
     ax.set_title(title)
     ax.grid(axis='y',alpha=0.9, linestyle=':')
-    ax.set_yscale('log')
+
     ax.legend(loc = 'upper right')
 
 def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title=""):
@@ -147,7 +147,7 @@ def main(args):
 	y_error = []
 	readFileCompose(y_data, y_error)
 	#readFileSimple(y_data,y_error)
-	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'number of packets', '')
+	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'milliseconds', 'number of packets', '')
 	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered packets (%)', 'Measurements received by manager')
 	#barplot(x_arrange, x_data, y_data[0], y_error,'','','')
 	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','','')

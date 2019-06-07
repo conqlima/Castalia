@@ -147,7 +147,7 @@ def main(args):
 	y_data = []
 	y_error = []
 	readFileCompose(y_data, y_error)
-	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'associations average', '')
+	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average number of associations', '')
 	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average of associations', '')
 	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','Number of associations','')
 	plt.show()

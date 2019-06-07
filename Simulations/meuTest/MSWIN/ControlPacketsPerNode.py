@@ -147,7 +147,7 @@ def main(args):
 	y_data = []
 	y_error = []
 	readFileCompose(y_data, y_error)
-	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'control packets average', '')
+	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average number of control packets', '')
 	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average control packets', '')
 	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','number of control packets','')
 	plt.show()

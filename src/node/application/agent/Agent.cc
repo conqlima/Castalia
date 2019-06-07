@@ -421,18 +421,22 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     dataSN++;
                     agent_send_data(CONTEXT_ID);
 
-                    updateTimeOutToRetransmitPacket(SIMTIME_DBL(simTime() - rcvPacket->getCreationTime()));
-
                     //After an associantion, a packet is sent with no timeout
                     if (getNumberOfAssociationsTotal(nodeNumber) > isTheFirstAssociation)
                     {
                         //The first measurement send after a association
+                        timeOutToRetransmitPacket = 0.4;
                         setTimer(SEND_PACKET, 0);
                         isTheFirstAssociation = getNumberOfAssociationsTotal(nodeNumber);
                     }
                     else
+                    {
+                        double t = SIMTIME_DBL(simTime()) - initialTime;
+                        if(t < 0.4)
+                        updateTimeOutToRetransmitPacket(t);
                         setTimer(SEND_PACKET, data_spacing);
-
+                    }
+                    initialTime = SIMTIME_DBL(simTime());
                     --alarmt;
                 }
                 //Manager-initiated and Agent-initiated mode: request association release
@@ -533,8 +537,9 @@ void Agent::timerFiredCallback(int index)
                 //3 new associations can be made now
                 RC = RC_COUNT;
 
-                if (retransmissionPacket)
+                if (retransmissionPacket){
                     setTimer(TO_OPERA, timeOutToRetransmitPacket);
+                }
                 else
                     setTimer(TO_OPERA, 3);
 
@@ -632,6 +637,7 @@ void Agent::timerFiredCallback(int index)
         if ((numOfRetransmissions < maxNumOfRetransmition) && retransmissionPacket)
         {
             retransmitPacket();
+            initialTime = SIMTIME_DBL(simTime());
             numOfRetransmissions++;
             setTimer(TO_OPERA, timeOutToRetransmitPacket);
         }
@@ -868,5 +874,5 @@ void Agent::retransmitPacket(void)
 }
 
 void Agent::updateTimeOutToRetransmitPacket(double t){
-    timeOutToRetransmitPacket = t * 1000;
+        timeOutToRetransmitPacket = t * 100;
 }

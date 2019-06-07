@@ -85,7 +85,7 @@ def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title
     # to remove line between points
     ax.errorbar(x_arrange, y_data, yerr = error_data, color = '#297083', ls = 'none', lw = 2, capthick = 2, capsize=3)
     ax.set_xticks(x_arrange)
-    ax.set_xticklabels(x_data, rotation=90)
+    ax.set_xticklabels(x_data)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
@@ -113,7 +113,7 @@ def readFileCompose(y_data, y_error):
 		line_count = 0
 		next(csv_reader)
 		for row in csv_reader:
-			j = 1
+			j = 3
 			temp_y_data = []
 			temp_intervalo_confianca = []
 			while j < len(row):
@@ -138,7 +138,7 @@ def readFileSimple(y_data, y_error):
 
 
 def main(args):
-	x_data = ['[0,1)','[1,2)','[2,3)','[3,4)','[4,5)','[5,6)','[6,7)',' [7,8) ',' [8,9) ',' [9,10) ',' [10,inf) ']
+	x_data = ['1','2','3','4','5','6','7','8','9','10']
 	x_arrange = np.arange(len(x_data))
 	#y_data_names = ['confirmedMode','noConfirmedMode','retransmissionMode']
 	y_data = []
@@ -147,7 +147,7 @@ def main(args):
 	#readFileSimple(y_data,y_error)
 	#groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered packets (%)', 'Measurements received by manager')
 	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered packets (%)', 'Measurements received by manager')
-	barplot(x_arrange, x_data, y_data[0], y_error[0],'retransmission retries','packets average','')
+	barplot(x_arrange, x_data, y_data[0], y_error[0],'retransmission retries','average number of packets','')
 	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','','')
 	plt.show()
 	return 0

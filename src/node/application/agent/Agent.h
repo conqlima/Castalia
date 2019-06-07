@@ -53,6 +53,7 @@ private:
     double maxSimTime;
     double timeOutToRetransmitPacket;
     double managerInitiatedTime;
+    double initialTime;
     //double numberOfReceivedMeasurementsToSendStop;
     float packet_spacing;
     float data_spacing;
