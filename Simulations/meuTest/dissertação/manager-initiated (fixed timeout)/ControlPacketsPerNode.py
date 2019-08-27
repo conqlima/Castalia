@@ -56,7 +56,7 @@ def stackedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_labe
     ax.set_xlabel(x_label)
     ax.set_title(title)
     ax.grid(axis='y',alpha=0.9, linestyle=':')
-    ax.set_yscale('log')
+    #ax.set_yscale('log')
     ax.legend(loc = 'upper left')
 
 def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_label="", y_label="", title=""):
@@ -80,8 +80,8 @@ def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_labe
     ax.set_xlabel(x_label)
     ax.set_title(title)
     ax.grid(axis='y',alpha=0.9, linestyle=':')
-    ax.set_yscale('log')
-    ax.legend(loc = 'upper left')
+    #ax.set_yscale('log')
+    ax.legend(loc = 'best')
 
 def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title=""):
     _, ax = plt.subplots()
@@ -157,7 +157,7 @@ def readFileSimple(y_data, y_error):
 def main(args):
 	x_data = ['Medidor de\nPressão Arterial','Oxímetro','Medidor\nde Glicose','Termômetro','ECG']
 	x_arrange = np.arange(len(x_data))
-	y_data_names = ['Com Confirmação','Sem Confirmação','Retransmissão']
+	y_data_names = ['noTimePeriodMode','singleMode','timePeriodMode']
 	y_data = []
 	y_error = []
 	readFileCompose(y_data, y_error)

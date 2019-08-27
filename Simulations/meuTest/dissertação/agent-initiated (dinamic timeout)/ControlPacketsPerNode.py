@@ -89,12 +89,14 @@ def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title
     ax.bar(x_arrange, y_data, color = '#539caf', align = 'center')
     # Draw error bars to show standard deviation, set ls to 'none'
     # to remove line between points
-    ax.errorbar(x_arrange, y_data, yerr = error_data, color = '#297083', ls = 'none', lw = 2, capthick = 2)
+    ax.errorbar(x_arrange, y_data, yerr = error_data, color = '#297083', ls = 'none', lw = 2, capthick = 2, capsize=3)
     ax.set_xticks(x_arrange)
     ax.set_xticklabels(x_data)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
+    ax.set_yscale('log')
+    ax.grid(axis='y',alpha=0.9, linestyle=':')
     
 def lineplot(x_arrange, x_data, y_data_list, y_data_names, error_data, x_label="", y_label="", title=""):
     _, ax = plt.subplots()
@@ -157,11 +159,12 @@ def readFileSimple(y_data, y_error):
 def main(args):
 	x_data = ['Medidor de\nPressão Arterial','Oxímetro','Medidor\nde Glicose','Termômetro','ECG']
 	x_arrange = np.arange(len(x_data))
-	y_data_names = ['Com Confirmação','Sem Confirmação','Retransmissão']
+	#y_data_names = ['Com Confirmação','Sem Confirmação','Retransmissão']
 	y_data = []
 	y_error = []
 	readFileCompose(y_data, y_error)
-	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'número médio de pacotes de controle', '')
+	barplot(x_arrange, x_data, y_data[0], y_error[0],'','número médio de pacotes de controle','')
+	#groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'número médio de pacotes de controle', '')
 	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average control packets', '')
 	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','number of control packets','')
 	plt.show()

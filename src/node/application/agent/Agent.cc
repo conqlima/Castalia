@@ -425,18 +425,18 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     if (getNumberOfAssociationsTotal(nodeNumber) > isTheFirstAssociation)
                     {
                         //The first measurement send after a association
-                        timeOutToRetransmitPacket = 0.4;
+                        //timeOutToRetransmitPacket = 0.4;
                         setTimer(SEND_PACKET, 0);
                         isTheFirstAssociation = getNumberOfAssociationsTotal(nodeNumber);
                     }
                     else
                     {
                         double t = SIMTIME_DBL(simTime()) - initialTime;
-                        if(t < 0.4)
+                        //if(t < 0.4)
                         updateTimeOutToRetransmitPacket(t);
                         setTimer(SEND_PACKET, data_spacing);
                     }
-                    initialTime = SIMTIME_DBL(simTime());
+                    //initialTime = SIMTIME_DBL(simTime());
                     --alarmt;
                 }
                 //Manager-initiated and Agent-initiated mode: request association release
@@ -507,6 +507,7 @@ void Agent::timerFiredCallback(int index)
             st_msg[nodeNumber].msgType.pop();
         }
         toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
+        initialTime = SIMTIME_DBL(simTime());
         packetsSent[recipientId]++;
         fsm_states c = ctx->fsm->state;
 
@@ -869,10 +870,15 @@ void Agent::retransmitPacket(void)
     trace() << "resending packet #" << dataSN << " to node " << recipientAddress.c_str();
     //toNetworkLayer(pktGlobal, recipientAddress.c_str());
     toNetworkLayer(createDataPacket(dataSN), recipientAddress.c_str());
+    initialTime = SIMTIME_DBL(simTime());
     packetsSent[recipientId]++;
     //collectOutput("Number of transmissions retries per packet", dataSN);
 }
 
 void Agent::updateTimeOutToRetransmitPacket(double t){
         timeOutToRetransmitPacket = t * 100;
+        if (timeOutToRetransmitPacket > 0.4)
+        timeOutToRetransmitPacket = 0.4;
+        else if (timeOutToRetransmitPacket < 0.09)
+        timeOutToRetransmitPacket = 0.4;
 }
