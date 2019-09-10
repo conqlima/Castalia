@@ -22,12 +22,15 @@ void Agent::startup()
     HUBNODE = par("hubNode");
     retransmissionPacket = par("retransmitPacket");
     timeOutToRetransmitPacket = par("timeOutToRetransmitPacket");
+    dinamicTimeout = par("dinamicTimeout");
     maxNumOfRetransmition = par("maxNumOfRetransmition");
     confirmed_event = par("confirmed_event");
     packet_rate = par("packet_rate");
     managerInitiated = par("managerInitiated");
     managerInitiatedMode = par("managerInitiateMode").stringValue();
     managerInitiatedTime = par("managerInitiatedTime");
+    dinamicTimeoutMean = 0;
+    dinamicTimeoutMeanCount = 0;
 
     //Node 0 is always the next recipient
     recipientAddress = par("nextRecipient").stringValue();
@@ -432,8 +435,8 @@ void Agent::fromNetworkLayer(ApplicationPacket *rcvPacketa,
                     else
                     {
                         double t = SIMTIME_DBL(simTime()) - initialTime;
-                        //if(t < 0.4)
-                        updateTimeOutToRetransmitPacket(t);
+                        if(dinamicTimeout)
+                            updateTimeOutToRetransmitPacket(t);
                         setTimer(SEND_PACKET, data_spacing);
                     }
                     //initialTime = SIMTIME_DBL(simTime());
@@ -678,6 +681,8 @@ void Agent::finishSpecific()
     declareOutput("Measurement Packets Sent");
     declareOutput("Total of associations made");
 
+    declareOutput("Timeout to retransmit mean");
+
     // temp variable to access packets received by other nodes
     // cTopology *topo;
     // topo = new cTopology("topo");
@@ -709,6 +714,7 @@ void Agent::finishSpecific()
     collectOutput("Measurement Packets Sent", HUBNODE, "", getMeasurementPacketsTotal(nodeNumber));
     collectOutput("Total of associations made", HUBNODE, "", getNumberOfAssociationsTotal(nodeNumber));
 
+    collectOutput("Timeout to retransmit mean", HUBNODE, "", dinamicTimeoutMean/dinamicTimeoutMeanCount);
     //delete (topo);
     long bytesDelivered = getBytesReceived(nodeNumber); 
     if (bytesDelivered > 0)
@@ -881,4 +887,8 @@ void Agent::updateTimeOutToRetransmitPacket(double t){
         timeOutToRetransmitPacket = 0.4;
         else if (timeOutToRetransmitPacket < 0.09)
         timeOutToRetransmitPacket = 0.4;
+        
+        dinamicTimeoutMean = dinamicTimeoutMean + timeOutToRetransmitPacket;
+        dinamicTimeoutMeanCount++;
+        
 }

@@ -55,8 +55,10 @@ private:
     double managerInitiatedTime;
     double initialTime;
     //double numberOfReceivedMeasurementsToSendStop;
+    double dinamicTimeoutMean;
     float packet_spacing;
     float data_spacing;
+    int dinamicTimeoutMeanCount;
     int dataSN;
     int recipientId;
     int alarmt;
@@ -67,6 +69,7 @@ private:
     int numOfRetransmissions;
     int maxNumOfRetransmition;
     int isTheFirstAssociation;
+    bool dinamicTimeout;
     bool confirmed_event;
     bool retransmissionPacket;
     bool managerInitiated;
