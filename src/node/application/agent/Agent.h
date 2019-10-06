@@ -34,6 +34,8 @@ using namespace std;
  * Optimized exchange protocol - 2016, page 75.
  */
 #define RC_COUNT 3
+#define ALFA 0.125
+#define BETA 0.25
 
 enum AgentTimers
 {
@@ -53,9 +55,12 @@ private:
     double maxSimTime;
     double timeOutToRetransmitPacket;
     double managerInitiatedTime;
-    double initialTime;
+    simtime_t initialTime;
+    //double initialTime;
     //double numberOfReceivedMeasurementsToSendStop;
     double dinamicTimeoutMean;
+    double EstimatedRTT;
+    double DevRTT;
     float packet_spacing;
     float data_spacing;
     int dinamicTimeoutMeanCount;
@@ -73,6 +78,7 @@ private:
     bool confirmed_event;
     bool retransmissionPacket;
     bool managerInitiated;
+    bool errorOccurred;
     unsigned int my_plugin_number;
     unsigned int opt;
     unsigned int nodeNumber;
