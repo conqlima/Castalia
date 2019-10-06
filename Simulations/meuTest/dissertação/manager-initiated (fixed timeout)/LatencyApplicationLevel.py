@@ -26,6 +26,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 12})
+plt.rcParams["figure.figsize"] = (20,5)
 
 def stackedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_label="", y_label="", title=""):
     #print(y_data_list)
@@ -35,29 +36,24 @@ def stackedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_labe
     for i in range(0, len(y_data_list)):
         if i == 0:
             #print(y_data_list[i])
-            #ax.bar(x_arrange, y_data_list[i], align = 'center', label = y_data_names[i], yerr = y_error[i])
             ax.bar(x_arrange, y_data_list[i], align = 'center', label = y_data_names[i])
         elif i == 1:
             #print(y_data_list[i])
-            #ax.bar(x_arrange, y_data_list[i], bottom = y_data_list[i-1], align = 'center', label = y_data_names[i], yerr = y_error[i])
             ax.bar(x_arrange, y_data_list[i], bottom = y_data_list[i-1], align = 'center', label = y_data_names[i])
         else:
             #print(y_data_list[i])
             # For each category after the first, the bottom of the
             # bar will be the top of the last category
             y_data_sub_list = y_data_list[:i]
-            #print(y_data_sub_list)
-            #print([sum(x) for x in zip(*y_data_sub_list)])
-            #ax.bar(x_arrange, y_data_list[i], bottom = [sum(x) for x in zip(*y_data_sub_list)], align = 'center', label = y_data_names[i], yerr = y_error[i])
+            print(y_data_sub_list)
+            print([sum(x) for x in zip(*y_data_sub_list)])
             ax.bar(x_arrange, y_data_list[i], bottom = [sum(x) for x in zip(*y_data_sub_list)], align = 'center', label = y_data_names[i])
     ax.set_xticks(x_arrange)
-    ax.set_xticklabels(x_data)
+    ax.set_xticklabels(x_data, rotation=90)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    ax.grid(axis='y',alpha=0.9, linestyle=':')
-    ax.set_yscale('log')
-    ax.legend(loc = 'upper left')
+    ax.legend(loc = 'lower right')
 
 def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_label="", y_label="", title=""):
     _, ax = plt.subplots()
@@ -72,16 +68,17 @@ def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_labe
     for i in range(0, len(y_data_list)):
         # Move the bar to the right on the x-axis so it doesn't
         # overlap with previously drawn ones
-        #print(alteration)
-        ax.bar(x_arrange + alteration[i], y_data_list[i], label = y_data_names[i], yerr = y_error[i], width = ind_width, capsize=3)
+        print(len(y_data_list[i]))
+        print(len(x_arrange))
+        ax.bar(x_arrange + alteration[i], y_data_list[i], label = y_data_names[i], width = ind_width)
     ax.set_xticks(x_arrange - (ind_width/2))
-    ax.set_xticklabels(x_data)
+    ax.set_xticklabels(x_data, rotation=90)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
     ax.grid(axis='y',alpha=0.9, linestyle=':')
     ax.set_yscale('log')
-    ax.legend(loc = 'upper left')
+    ax.legend(loc = 'upper right')
 
 def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title=""):
     _, ax = plt.subplots()
@@ -89,12 +86,14 @@ def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title
     ax.bar(x_arrange, y_data, color = '#539caf', align = 'center')
     # Draw error bars to show standard deviation, set ls to 'none'
     # to remove line between points
-    ax.errorbar(x_arrange, y_data, yerr = error_data, color = '#297083', ls = 'none', lw = 2, capthick = 2)
+    ax.errorbar(x_arrange, y_data, color = '#297083', ls = 'none', lw = 2, capthick = 2)
     ax.set_xticks(x_arrange)
-    ax.set_xticklabels(x_data)
+    ax.set_xticklabels(x_data, rotation=90)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
+    ax.set_yscale('log')
+    ax.legend(loc = 'upper right')
     
 def lineplot(x_arrange, x_data, y_data_list, y_data_names, error_data, x_label="", y_label="", title=""):
     _, ax = plt.subplots()
@@ -110,10 +109,9 @@ def lineplot(x_arrange, x_data, y_data_list, y_data_names, error_data, x_label="
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    ax.grid(axis='y',alpha=0.9, linestyle=':')
 
 def readFileCompose(y_data, y_error):
-	with open('ControlPacketsPerNode.csv') as csv_file:
+	with open('LatencyApplicationLevel.csv') as csv_file:
 		csv_reader = csv.reader(csv_file, delimiter=',')
 		line_count = 0
 		next(csv_reader)
@@ -121,49 +119,55 @@ def readFileCompose(y_data, y_error):
 			j = 1
 			temp_y_data = []
 			temp_intervalo_confianca = []
-			while j < len(row)-1:
+			while j < len(row):
 				temp_y_data.append(float(row[j]))
-				temp_intervalo_confianca.append(float(row[j+1]))
-				j += 2
+				#temp_intervalo_confianca.append(float(row[j+1]))
+				j += 1
 			y_data.append(temp_y_data[:])
-			y_error.append(temp_intervalo_confianca[:])
+			#y_error.append(temp_intervalo_confianca[:])
 			line_count += 1
-		print(y_data)
+		#print(y_data)
 
 def readFileSimple(y_data, y_error):
-	with open('ControlPacketsPerNode.csv') as csv_file:
+	with open('LatencyApplicationLevel.csv') as csv_file:
 		csv_reader = csv.reader(csv_file, delimiter=',')
 		line_count = 0
+		next(csv_reader)
 		for row in csv_reader:
-			y_data.append(float(row[1]))
-			y_error.append(float(row[2]))
+			if line_count == 0:
+				y_data.append([float(i) for i in row[1:32]])
+				#y_error.append(float(row[2]))
 			line_count += 1
 
 #English
 # def main(args):
-	# x_data = ['Blood Plessure\nMonitor','Oximeter','Glucose\nmeter','Thermometer','ECG']
+	# x_data = ['[0,30)','[30,60)','[60,90)','[90,120)','[120,150)','[150,180)','[180,210)',' [210,240) ',' [240,270) ',' [270,300) ',' [300,330) ',' [330,360) ',' [360,390) ',' [390,420) ',' [420,450) ',' [450,480) ',' [480,510) ',' [510,540) ',' [540,570) ',' [570,600) ',' [600,630) ',' [630,660) ',' [660,690) ',' [690,720) ',' [720,750) ',' [750,780) ',' [780,810) ',' [810,840) ',' [840,870) ',' [870,900) ',' [900,inf) ']
 	# x_arrange = np.arange(len(x_data))
 	# y_data_names = ['confirmedMode','noConfirmedMode','retransmissionMode']
 	# y_data = []
 	# y_error = []
 	# readFileCompose(y_data, y_error)
-	# groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average number of control packets', '')
-	# #stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average control packets', '')
-	# #lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','number of control packets','')
+	# #readFileSimple(y_data,y_error)
+	# groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'milliseconds', 'number of packets', '')
+	# #stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered packets (%)', 'Measurements received by manager')
+	# #barplot(x_arrange, x_data, y_data[0], y_error,'','','')
+	# #lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','','')
 	# plt.show()
 	# return 0
 	
 #Português
 def main(args):
-	x_data = ['Medidor de\nPressão Arterial','Oxímetro','Medidor\nde Glicose','Termômetro','ECG']
+	x_data = ['[0,30)','[30,60)','[60,90)','[90,120)','[120,150)','[150,180)','[180,210)',' [210,240) ',' [240,270) ',' [270,300) ',' [300,330) ',' [330,360) ',' [360,390) ',' [390,420) ',' [420,450) ',' [450,480) ',' [480,510) ',' [510,540) ',' [540,570) ',' [570,600) ',' [600,630) ',' [630,660) ',' [660,690) ',' [690,720) ',' [720,750) ',' [750,780) ',' [780,810) ',' [810,840) ',' [840,870) ',' [870,900) ',' [900,inf) ']
 	x_arrange = np.arange(len(x_data))
-	y_data_names = ['Com Confirmação','Sem Confirmação','Retransmissão']
+	y_data_names = [' noTimePeriodMode','singleMode','timePeriodMode']
 	y_data = []
 	y_error = []
 	readFileCompose(y_data, y_error)
-	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'número médio de pacotes de controle', '')
-	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average control packets', '')
-	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','number of control packets','')
+	#readFileSimple(y_data,y_error)
+	groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'milissegundos', 'número de pacotes', '')
+	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered packets (%)', 'Measurements received by manager')
+	#barplot(x_arrange, x_data, y_data[0], y_error,'','','')
+	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','','')
 	plt.show()
 	return 0
 
