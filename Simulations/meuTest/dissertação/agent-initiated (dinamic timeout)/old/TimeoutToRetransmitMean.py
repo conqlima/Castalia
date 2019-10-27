@@ -95,7 +95,6 @@ def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    ax.set_yscale('log')
     ax.grid(axis='y',alpha=0.9, linestyle=':')
     
 def lineplot(x_arrange, x_data, y_data_list, y_data_names, error_data, x_label="", y_label="", title=""):
@@ -115,7 +114,7 @@ def lineplot(x_arrange, x_data, y_data_list, y_data_names, error_data, x_label="
     ax.grid(axis='y',alpha=0.9, linestyle=':')
 
 def readFileCompose(y_data, y_error):
-	with open('AssociationsMadePerNode.csv') as csv_file:
+	with open('TimeoutToRetransmitMean.csv') as csv_file:
 		csv_reader = csv.reader(csv_file, delimiter=',')
 		line_count = 0
 		next(csv_reader)
@@ -133,7 +132,7 @@ def readFileCompose(y_data, y_error):
 		print(y_data)
 
 def readFileSimple(y_data, y_error):
-	with open('AssociationsMadePerNode.csv') as csv_file:
+	with open('TimeoutToRetransmitMean.csv') as csv_file:
 		csv_reader = csv.reader(csv_file, delimiter=',')
 		line_count = 0
 		for row in csv_reader:
@@ -163,7 +162,7 @@ def main(args):
 	y_data = []
 	y_error = []
 	readFileCompose(y_data, y_error)
-	barplot(x_arrange, x_data, y_data[0], y_error[0],'','número médio de associações','')
+	barplot(x_arrange, x_data, y_data[0], y_error[0],'','TimeOut em segundos','')
 	#groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'número médio de associações', '')
 	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average of associations', '')
 	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','Number of associations','')

@@ -95,7 +95,6 @@ def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    ax.set_yscale('log')
     ax.grid(axis='y',alpha=0.9, linestyle=':')
     
 def lineplot(x_arrange, x_data, y_data_list, y_data_names, error_data, x_label="", y_label="", title=""):

@@ -132,7 +132,7 @@ def main(args):
 	y_data = []
 	y_error = []
 	readfile(y_data, y_error)
-	barplot(x_arrange, x_data, y_data[0], y_error[0],'','leituras entregas (%)','')
+	barplot(x_arrange, x_data, y_data[0], y_error[0],'','leituras entregues (%)','')
 	#groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'leituras entregues (%)', '')
 	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered measurements (%)', '')
 	plt.show()

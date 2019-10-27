@@ -28,36 +28,31 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 12})
 
 def stackedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_label="", y_label="", title=""):
-    #print(y_data_list)
+    print(y_data_list)
     y_data_sub_list = []
     _, ax = plt.subplots()
     # Draw bars, one category at a time
     for i in range(0, len(y_data_list)):
         if i == 0:
-            #print(y_data_list[i])
-            #ax.bar(x_arrange, y_data_list[i], align = 'center', label = y_data_names[i], yerr = y_error[i], capsize=3)
-            ax.bar(x_arrange, y_data_list[i], align = 'center', label = y_data_names[i])
+            print(y_data_list[i])
+            ax.bar(x_arrange, y_data_list[i], align = 'center', label = y_data_names[i], yerr = y_error[i])
         elif i == 1:
-            #print(y_data_list[i])
-            #ax.bar(x_arrange, y_data_list[i], bottom = y_data_list[i-1], align = 'center', label = y_data_names[i], yerr = y_error[i], capsize=3)
-            ax.bar(x_arrange, y_data_list[i], bottom = y_data_list[i-1], align = 'center', label = y_data_names[i])
+            print(y_data_list[i])
+            ax.bar(x_arrange, y_data_list[i], bottom = y_data_list[i-1], align = 'center', label = y_data_names[i], yerr = y_error[i])
         else:
-            #print(y_data_list[i])
+            print(y_data_list[i])
             # For each category after the first, the bottom of the
             # bar will be the top of the last category
             y_data_sub_list = y_data_list[:i]
-            #print(y_data_sub_list)
-            #print([sum(x) for x in zip(*y_data_sub_list)])
-            #ax.bar(x_arrange, y_data_list[i], bottom = [sum(x) for x in zip(*y_data_sub_list)], align = 'center', label = y_data_names[i], yerr = y_error[i], capsize=3)
-            ax.bar(x_arrange, y_data_list[i], bottom = [sum(x) for x in zip(*y_data_sub_list)], align = 'center', label = y_data_names[i])
+            print(y_data_sub_list)
+            print([sum(x) for x in zip(*y_data_sub_list)])
+            ax.bar(x_arrange, y_data_list[i], bottom = [sum(x) for x in zip(*y_data_sub_list)], align = 'center', label = y_data_names[i], yerr = y_error[i])
     ax.set_xticks(x_arrange)
     ax.set_xticklabels(x_data)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    ax.grid(axis='y',alpha=0.9, linestyle=':')
-    ax.set_yscale('log')
-    ax.legend(loc = 'upper left')
+    ax.legend(loc = 'lower right')
 
 def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_label="", y_label="", title=""):
     _, ax = plt.subplots()
@@ -79,10 +74,29 @@ def groupedbarplot(x_arrange, x_data, y_data_list, y_data_names, y_error, x_labe
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    ax.set_yscale('log')
     ax.grid(axis='y',alpha=0.9, linestyle=':')
-    ax.legend(loc = 'upper left')
+    ax.legend(loc = 'lower left')
 
+def readfile(y_data, y_error):
+	with open('MeasurementsReceivedinManagerAgentInitiated.csv') as csv_file:
+		csv_reader = csv.reader(csv_file, delimiter=',')
+		line_count = 0
+		next(csv_reader)
+		for row in csv_reader:
+			j = 0
+			temp_y_data = []
+			temp_intervalo_confianca = []
+			while j < (len(row)-4):
+				if j == 0:
+					j += 2
+				else:
+					j += 4
+				#print(j)
+				temp_y_data.append(float(row[j]))
+				temp_intervalo_confianca.append(float(row[j+2]))
+			y_data.append(temp_y_data[:])
+			y_error.append(temp_intervalo_confianca[:])
+			line_count += 1
 def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title=""):
     _, ax = plt.subplots()
     # Draw bars, position them in the center of the tick mark on the x-axis
@@ -95,52 +109,9 @@ def barplot(x_arrange, x_data, y_data, error_data, x_label="", y_label="", title
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    ax.set_yscale('log')
+    #ax.set_yscale('log')
+    #ax.legend(loc = 'upper right')
     ax.grid(axis='y',alpha=0.9, linestyle=':')
-    
-def lineplot(x_arrange, x_data, y_data_list, y_data_names, error_data, x_label="", y_label="", title=""):
-    _, ax = plt.subplots()
-    # Draw bars, position them in the center of the tick mark on the x-axis
-    #ax.bar(x_arrange, y_data, color = '#539caf', align = 'center')
-    # Draw error bars to show standard deviation, set ls to 'none'
-    # to remove line between points
-    for i in range(0, len(y_data_list)):
-        ax.errorbar(x_arrange, y_data_list[i], label = y_data_names[i], yerr = error_data[i], fmt='o--', capsize=3, markersize=4)
-    ax.legend()
-    ax.set_xticks(x_arrange)
-    ax.set_xticklabels(x_data)
-    ax.set_ylabel(y_label)
-    ax.set_xlabel(x_label)
-    ax.set_title(title)
-    ax.grid(axis='y',alpha=0.9, linestyle=':')
-
-def readFileCompose(y_data, y_error):
-	with open('AssociationsMadePerNode.csv') as csv_file:
-		csv_reader = csv.reader(csv_file, delimiter=',')
-		line_count = 0
-		next(csv_reader)
-		for row in csv_reader:
-			j = 1
-			temp_y_data = []
-			temp_intervalo_confianca = []
-			while j < len(row)-1:
-				temp_y_data.append(float(row[j]))
-				temp_intervalo_confianca.append(float(row[j+1]))
-				j += 2
-			y_data.append(temp_y_data[:])
-			y_error.append(temp_intervalo_confianca[:])
-			line_count += 1
-		print(y_data)
-
-def readFileSimple(y_data, y_error):
-	with open('AssociationsMadePerNode.csv') as csv_file:
-		csv_reader = csv.reader(csv_file, delimiter=',')
-		line_count = 0
-		for row in csv_reader:
-			y_data.append(float(row[1]))
-			y_error.append(float(row[2]))
-			line_count += 1
-
 #English
 # def main(args):
 	# x_data = ['Blood Plessure\nMonitor','Oximeter','Glucose\nmeter','Thermometer','ECG']
@@ -148,10 +119,9 @@ def readFileSimple(y_data, y_error):
 	# y_data_names = ['confirmedMode','noConfirmedMode','retransmissionMode']
 	# y_data = []
 	# y_error = []
-	# readFileCompose(y_data, y_error)
-	# groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average number of associations', '')
-	# #stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average of associations', '')
-	# #lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','Number of associations','')
+	# readfile(y_data, y_error)
+	# groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered measurements (%)', '')
+	# #stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered measurements (%)', '')
 	# plt.show()
 	# return 0
 	
@@ -159,14 +129,12 @@ def readFileSimple(y_data, y_error):
 def main(args):
 	x_data = ['Medidor de\nPressão Arterial','Oxímetro','Medidor\nde Glicose','Termômetro','ECG']
 	x_arrange = np.arange(len(x_data))
-	#y_data_names = ['Com Confirmação','Sem Confirmação','Retransmissão']
 	y_data = []
 	y_error = []
-	readFileCompose(y_data, y_error)
-	barplot(x_arrange, x_data, y_data[0], y_error[0],'','número médio de associações','')
-	#groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'número médio de associações', '')
-	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'average of associations', '')
-	#lineplot(x_arrange, x_data, y_data, y_data_names, y_error,'','Number of associations','')
+	readfile(y_data, y_error)
+	barplot(x_arrange, x_data, y_data[0], y_error[0],'','leituras entregas (%)','')
+	#groupedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'leituras entregues (%)', '')
+	#stackedbarplot(x_arrange, x_data, y_data, y_data_names, y_error,'', 'delivered measurements (%)', '')
 	plt.show()
 	return 0
 
